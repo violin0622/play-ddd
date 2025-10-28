@@ -38,8 +38,10 @@ func NewNotfoundError(e error) error {
 }
 
 var (
-	ErrMutateCompletedNovel = errors.New(`mutate a completed novel is not allowed`)
-	ErrTitleAlreadyExist    = errors.New(
+	ErrMutateCompletedNovel = errors.New(
+		`mutate a completed novel is not allowed`,
+	)
+	ErrTitleAlreadyExist = errors.New(
 		`the author has already created a novel of same title before`,
 	)
 )

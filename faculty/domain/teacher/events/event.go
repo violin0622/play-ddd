@@ -3,9 +3,9 @@ package events
 import (
 	"fmt"
 
-	"play-ddd/faculty/domain"
-
 	"github.com/oklog/ulid/v2"
+
+	"play-ddd/faculty/domain"
 )
 
 type Event = domain.Event[ulid.ULID, ulid.ULID]

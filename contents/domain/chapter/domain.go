@@ -1,9 +1,9 @@
 package novel
 
 import (
-	"play-ddd/contents/domain"
-
 	"github.com/oklog/ulid/v2"
+
+	"play-ddd/contents/domain"
 )
 
 type (

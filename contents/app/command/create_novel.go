@@ -1,9 +1,9 @@
 package command
 
 import (
-	"play-ddd/contents/domain/novel"
-
 	"github.com/oklog/ulid/v2"
+
+	"play-ddd/contents/domain/novel"
 )
 
 type CreateNovel struct {

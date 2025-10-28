@@ -3,9 +3,9 @@ package events
 import (
 	"time"
 
-	"play-ddd/contents/domain/novel/vo"
-
 	"github.com/oklog/ulid/v2"
+
+	"play-ddd/contents/domain/novel/vo"
 )
 
 var _ Event = (*NewChapterUploaded)(nil)
@@ -31,5 +31,6 @@ func (t NewChapterUploaded) AggID() ID            { return t.aid }
 func (t NewChapterUploaded) AggKind() string      { return `Novel` }
 func (t NewChapterUploaded) EmittedAt() time.Time { return t.at }
 func (t NewChapterUploaded) ID() ID               { return t.id }
-func (t NewChapterUploaded) Kind() string         { return `NewChapterUploaded` }
-func (t NewChapterUploaded) String() string       { return formatEvent(t) }
+
+func (t NewChapterUploaded) Kind() string   { return `NewChapterUploaded` }
+func (t NewChapterUploaded) String() string { return formatEvent(t) }

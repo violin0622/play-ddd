@@ -4,15 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/oklog/ulid/v2"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"play-ddd/common"
 	"play-ddd/contents/domain/novel"
 	"play-ddd/contents/domain/novel/events"
 	"play-ddd/contents/domain/novel/vo"
 	"play-ddd/contents/infra/eventstore/fake"
-
-	"github.com/oklog/ulid/v2"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ novel.EventRepo = (*nopEventRepo)(nil)

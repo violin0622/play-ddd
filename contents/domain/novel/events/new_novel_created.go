@@ -3,9 +3,9 @@ package events
 import (
 	"time"
 
-	"play-ddd/contents/domain/novel/vo"
-
 	"github.com/oklog/ulid/v2"
+
+	"play-ddd/contents/domain/novel/vo"
 )
 
 var _ Event = (*NovelCreated)(nil)

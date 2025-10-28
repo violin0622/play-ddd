@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"play-ddd/contents/domain/novel/vo"
-
 	"github.com/go-logr/logr"
 	"github.com/oklog/ulid/v2"
 	"github.com/samber/mo"
 
 	ev "play-ddd/contents/domain/novel/events"
+	"play-ddd/contents/domain/novel/vo"
 )
 
 // If not found, implements should return NotfoundError.
@@ -106,7 +105,10 @@ func (f Factory) UploadFirstChapter(
 		return fmt.Errorf(`upload first chapter: %w`, err)
 	}
 
-	f.er.Append(ctx, ev.NewNovelPublished(novel.id))
+	if err = f.er.Append(ctx, ev.NewNovelPublished(novel.id)); err != nil {
+		return fmt.Errorf(`upload first chapter: %w`, err)
+	}
+
 	return nil
 }
 

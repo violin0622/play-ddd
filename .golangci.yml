@@ -1,12 +1,18 @@
 version: "2"
 formatters:
   enable:
-    - goimports
+    - gci
     - gofumpt
     - golines
   settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
     gofumpt:
       extra-rules: true
-    goimports:
-      local-prefixes:
-        - play-ddd
+    golines:
+      max-len: 80
+      shorten-comments: true
+      reformat-tags: true

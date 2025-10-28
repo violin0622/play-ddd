@@ -3,10 +3,10 @@ package teacher
 import (
 	"context"
 
+	"github.com/oklog/ulid/v2"
+
 	"play-ddd/faculty/domain"
 	"play-ddd/faculty/domain/teacher/vo"
-
-	"github.com/oklog/ulid/v2"
 )
 
 type Record[ID comparable] interface {

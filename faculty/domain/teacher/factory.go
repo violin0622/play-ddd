@@ -5,11 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	"play-ddd/faculty/domain/teacher/vo"
-
 	"github.com/oklog/ulid/v2"
 
 	ev "play-ddd/faculty/domain/teacher/events"
+	"play-ddd/faculty/domain/teacher/vo"
 )
 
 type teacherBuilder struct {

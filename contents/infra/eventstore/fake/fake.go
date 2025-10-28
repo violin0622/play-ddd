@@ -4,18 +4,20 @@ import (
 	"context"
 	"errors"
 
-	"play-ddd/contents/domain"
-	"play-ddd/contents/domain/novel"
-
 	"github.com/oklog/ulid/v2"
 	"github.com/puzpuzpuz/xsync/v4"
+
+	"play-ddd/contents/domain"
+	"play-ddd/contents/domain/novel"
 )
 
 var (
-	_ domain.EventRepo[ulid.ULID, ulid.ULID] = (*fake[ulid.ULID, ulid.ULID])(nil)
-	_ domain.EventRepo[int64, int64]         = (*fake[int64, int64])(nil)
-	_ domain.EventRepo[string, string]       = (*fake[string, string])(nil)
-	_ novel.EventRepo                        = (*fake[novel.ID, novel.ID])(nil)
+	_ domain.EventRepo[ulid.ULID, ulid.ULID] = (*fake[ulid.ULID, ulid.ULID])(
+		nil,
+	)
+	_ domain.EventRepo[int64, int64]   = (*fake[int64, int64])(nil)
+	_ domain.EventRepo[string, string] = (*fake[string, string])(nil)
+	_ novel.EventRepo                  = (*fake[novel.ID, novel.ID])(nil)
 )
 
 // fake is a in memory event store for testing.
@@ -30,7 +32,10 @@ func New[EID, AID comparable]() fake[EID, AID] {
 }
 
 // Append implements domain.EventRepo.
-func (f fake[EID, AID]) Append(_ context.Context, es ...domain.Event[EID, AID]) error {
+func (f fake[EID, AID]) Append(
+	_ context.Context,
+	es ...domain.Event[EID, AID],
+) error {
 	for _, e := range es {
 		f.m.Compute(e.AggID(), computeEvent(e))
 	}
@@ -39,7 +44,10 @@ func (f fake[EID, AID]) Append(_ context.Context, es ...domain.Event[EID, AID]) 
 }
 
 // Fetch implements domain.EventRepo.
-func (f fake[EID, AID]) Fetch(_ context.Context, k AID) ([]domain.Event[EID, AID], error) {
+func (f fake[EID, AID]) Fetch(
+	_ context.Context,
+	k AID,
+) ([]domain.Event[EID, AID], error) {
 	if events, ok := f.m.Load(k); ok {
 		return events, nil
 	}

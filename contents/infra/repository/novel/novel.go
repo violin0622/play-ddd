@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"play-ddd/contents/domain/novel"
 	"play-ddd/contents/infra/eventstore/fake"
-
-	"github.com/puzpuzpuz/xsync/v4"
 )
 
 var _ novel.Repo = (*repo)(nil)
@@ -87,6 +87,10 @@ func (e esrepo) Get(ctx context.Context, id novel.ID) (novel.Novel, error) {
 
 func (esrepo) Save(context.Context, novel.Novel) error { return nil }
 
-func (e esrepo) Update(context.Context, novel.ID, func(context.Context, *novel.Novel) error) error {
+func (e esrepo) Update(
+	context.Context,
+	novel.ID,
+	func(context.Context, *novel.Novel) error,
+) error {
 	return nil
 }

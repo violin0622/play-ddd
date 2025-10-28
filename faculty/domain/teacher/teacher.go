@@ -3,11 +3,11 @@ package teacher
 import (
 	"fmt"
 
-	"play-ddd/faculty/domain/teacher/vo"
-
 	"github.com/oklog/ulid/v2"
 
+	"play-ddd/common"
 	ev "play-ddd/faculty/domain/teacher/events"
+	"play-ddd/faculty/domain/teacher/vo"
 )
 
 var _ Aggregate = (*Teacher)(nil)
@@ -41,7 +41,7 @@ func (t *Teacher) ReplayEvents(e ...ev.Event) error {
 	}
 
 	if e[0].Kind() != (ev.TeacherHired{}).Kind() {
-		return ErrInitialEvent
+		return common.ErrInitialEvent
 	}
 
 	for i := range e {
@@ -60,7 +60,7 @@ func (t *Teacher) applyEvent(e ev.Event) error {
 	case ev.TeacherRetired:
 		return t.applyRetired(e)
 	default:
-		return ErrUnknownEventKind(e.Kind())
+		return common.ErrUnknownEventKind(e.Kind())
 	}
 }
 

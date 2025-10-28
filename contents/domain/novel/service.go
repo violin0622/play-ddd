@@ -1,14 +1,6 @@
 package novel
 
-import (
-	"sync"
-)
-
-type service struct {
-	mu sync.Mutex
-
-	repo Repo
-}
+type service struct{}
 
 func NewService() *service {
 	return &service{}

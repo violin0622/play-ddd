@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"play-ddd/common"
-	"play-ddd/contents/domain/novel/vo"
-
 	ev "play-ddd/contents/domain/novel/events"
+	"play-ddd/contents/domain/novel/vo"
 )
 
 var _ Aggregate = (*Novel)(nil)
@@ -224,7 +223,9 @@ func (n Novel) updatedAtNewstChapterUpload() error {
 	if n.toc.Chapters[last].UploadedAt.Equal(n.updatedAt) {
 		return nil
 	}
-	return errors.New(`novel's update time should be identical to last chapter's update time`)
+	return errors.New(
+		`novel's update time should be identical to last chapter's update time`,
+	)
 }
 
 func (n Novel) chapterSequenceOrdered() error {
@@ -253,7 +254,9 @@ func (n Novel) totalWordCountIsSummitOfChapterWordCount() error {
 	if sum != n.wordCount {
 		return fmt.Errorf(
 			`novel's word count %d should be summit of every chapter's word count %d`,
-			n.wordCount, sum)
+			n.wordCount,
+			sum,
+		)
 	}
 
 	return nil
