@@ -1,0 +1,12 @@
+version: "2"
+formatters:
+  enable:
+    - goimports
+    - gofumpt
+    - golines
+  settings:
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes:
+        - play-ddd
