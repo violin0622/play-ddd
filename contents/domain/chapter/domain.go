@@ -1,4 +1,4 @@
-package novel
+package chapter
 
 import (
 	"github.com/oklog/ulid/v2"
@@ -7,7 +7,11 @@ import (
 )
 
 type (
-	Event     = domain.Event[ulid.ULID, ulid.ULID]
-	EventRepo = domain.EventRepo[ulid.ULID, ulid.ULID]
-	Aggregate = domain.Aggregate[ulid.ULID]
+	ID        = ulid.ULID
+	Event     = domain.Event[ID, ID]
+	EventRepo = domain.EventRepo[ID, ID]
+	Aggregate = domain.Aggregate[ID]
+	Repo      = domain.AggregateRepo[ID, Chapter]
 )
+
+var ZeroID = ulid.Zero

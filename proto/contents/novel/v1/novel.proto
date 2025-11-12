@@ -1,0 +1,41 @@
+syntax = "proto3";
+package contents.novel.v1;
+
+import "google/protobuf/timestamp.proto";
+import "ulid/ulid.proto";
+
+option go_package = "contents/novel/v1";
+
+message Novel {
+  message Chapter {
+    ulid.ULID id = 1;
+    int32 sequence = 2;
+    string title = 3;
+    int32 word_count = 4;
+  }
+
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_DRAFT = 1;
+    STATUS_SERIAL = 2;
+    STATUS_NOLONGERUPDATE = 3;
+    STATUS_COMPLETED = 4;
+  }
+
+  ulid.ULID id = 1;
+  string title = 2;
+  string category = 3;
+  string description = 4;
+  Author author = 5;
+  repeated string tags = 6;
+  repeated Chapter chapters = 7;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message Author {
+  // user id
+  ulid.ULID id = 1;
+  map<string, string> extra = 5;
+  google.protobuf.Timestamp registered_at = 10;
+}

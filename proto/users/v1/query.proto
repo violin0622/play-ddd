@@ -1,0 +1,22 @@
+syntax = "proto3";
+package users.v1;
+
+import "buf/validate/validate.proto";
+import "ulid/ulid.proto";
+
+option go_package = "users/v1";
+
+service QueryService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc GetMyInfo(GetMyInfoRequest) returns (GetMyInfoResponse);
+}
+
+message GetUserRequest {
+  ulid.ULID id = 1 [(buf.validate.field).required = true];
+}
+message GetUserResponse {}
+
+message GetMyInfoRequest {
+  ulid.ULID id = 1 [(buf.validate.field).required = true];
+}
+message GetMyInfoResponse {}

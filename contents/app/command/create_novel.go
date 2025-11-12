@@ -15,9 +15,13 @@ type CreateNovel struct {
 }
 
 type UploadChapter struct {
-	ID        novel.ID
-	Title     string
-	WordCount int
+	NovelID                   novel.ID
+	Title                     string
+	MainContent, ExtraContent string
 }
 
-type UpdateTags struct{}
+type UpdateNovelInfo struct {
+	NovelID novel.ID
+	Desc    string
+	Tags    []string
+}

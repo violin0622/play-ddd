@@ -75,6 +75,15 @@ func (n Novel) Status() vo.Status           { return n.s }
 func (n Novel) TOC() vo.TOC                 { return n.toc }
 func (n Novel) UpdatedAt() time.Time        { return n.updatedAt }
 func (n Novel) CreatedAt() time.Time        { return n.createdAt }
+func (n Novel) ChapterCount() int           { return len(n.toc.Chapters) - 1 }
+
+func (n Novel) LastChapter() (vo.Chapter, error) {
+	seq := len(n.toc.Chapters) - 1
+	if seq == 0 {
+		return vo.Chapter{}, errors.New(`no chapter yet`)
+	}
+	return n.toc.Chapters[seq], nil
+}
 
 func (n *Novel) ReplayEvents(es ...Event) error {
 	if len(es) == 0 {

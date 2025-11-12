@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package ulid;
+
+option go_package = "ulid/ulid;ulidpb";
+
+message ULID {
+  uint64 low = 1;
+  uint64 high = 2;
+}

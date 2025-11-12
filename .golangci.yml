@@ -1,4 +1,11 @@
 version: "2"
+linters:
+  enable:
+    - protogetter
+  settings:
+    protogetter:
+      skip-any-generated: true
+      replace-first-arg-in-append: true
 formatters:
   enable:
     - gci

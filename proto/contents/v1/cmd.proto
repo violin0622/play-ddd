@@ -1,0 +1,68 @@
+syntax = "proto3";
+package contents.v1;
+
+import "buf/validate/validate.proto";
+import "ulid/ulid.proto";
+
+option go_package = "contents/v1";
+
+service CmdService {
+  rpc CreateNovel(CreateNovelRequest) returns (CreateNovelResponse);
+  rpc UpdateNovel(UpdateNovelRequest) returns (UpdateNovelResponse);
+  rpc UploadChapter(UploadChapterRequest) returns (UploadChapterResponse);
+}
+
+message CreateNovelRequest {
+  ulid.ULID author_id = 1 [(buf.validate.field).required = true];
+  string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+  string desc = 3 [(buf.validate.field).string.max_len = 1024];
+  string category = 4 [(buf.validate.field).string.max_len = 128];
+  repeated string tags = 5 [(buf.validate.field).repeated = {
+    max_items: 10
+    unique: true
+    items: {
+      string: {
+        min_len: 1
+        max_len: 10
+      }
+    }
+  }];
+}
+
+message CreateNovelResponse {
+  // novel ID
+  ulid.ULID id = 1;
+}
+
+message UpdateNovelRequest {
+  ulid.ULID id = 1;
+  string desc = 3 [(buf.validate.field).string.max_len = 1024];
+  repeated string tags = 4 [(buf.validate.field).repeated = {
+    max_items: 10
+    unique: true
+    items: {
+      string: {
+        min_len: 1
+        max_len: 10
+      }
+    }
+  }];
+}
+message UpdateNovelResponse {}
+
+message UploadChapterRequest {
+  ulid.ULID novel_id = 1 [(buf.validate.field).required = true];
+  string title = 2 [(buf.validate.field).string.max_len = 256];
+  string main_content = 3 [(buf.validate.field) = {
+    required: true
+    string: {max_len: 5000}
+  }];
+  string extra_content = 4;
+}
+message UploadChapterResponse {
+  // chapter ID
+  ulid.ULID id = 1;
+}

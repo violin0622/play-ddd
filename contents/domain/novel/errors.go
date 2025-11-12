@@ -3,23 +3,11 @@ package novel
 import (
 	"errors"
 	"fmt"
+
+	"play-ddd/common"
 )
 
-type InvariantsBrokenError struct {
-	e error
-}
-
-func newInvariantsBrokenError(e error) error {
-	return InvariantsBrokenError{e: e}
-}
-
-func (e InvariantsBrokenError) Error() string {
-	return fmt.Sprintf(`invariants broken: %s`, e.e)
-}
-
-func (e InvariantsBrokenError) Unwrap() error {
-	return e.e
-}
+var newInvariantsBrokenError = common.NewInvariantsBrokenError
 
 type NotfoundError struct {
 	e error

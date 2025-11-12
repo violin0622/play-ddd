@@ -1,0 +1,38 @@
+syntax = "proto3";
+package users.v1;
+
+import "buf/validate/validate.proto";
+import "ulid/ulid.proto";
+
+option go_package = "users/v1";
+
+service CmdService {
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+}
+
+message SignUpRequest {
+  string username = 1 [(buf.validate.field).required = true];
+  string password = 2 [(buf.validate.field).required = true];
+}
+message SignUpResponse {
+  // user id
+  ulid.ULID id = 1;
+}
+
+message SignInRequest {
+  string username = 1 [(buf.validate.field).required = true];
+  string password = 2 [(buf.validate.field).required = true];
+}
+
+message SignInResponse {
+  // user id
+  ulid.ULID id = 1;
+}
+
+message SignOutRequest {
+  // user id
+  ulid.ULID id = 1 [(buf.validate.field).required = true];
+}
+message SignOutResponse {}

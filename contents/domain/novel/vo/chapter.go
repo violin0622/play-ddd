@@ -8,6 +8,7 @@ import (
 var SentinelChapter = Chapter{}
 
 type Chapter struct {
+	// ID         ulid.ULID
 	Title      string
 	Sequence   int
 	WordCount  int

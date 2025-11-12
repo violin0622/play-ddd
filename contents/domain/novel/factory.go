@@ -28,13 +28,25 @@ type Factory struct {
 func NewFactory(
 	er EventRepo,
 	log logr.Logger,
-	repo query,
+	repo Repo,
 ) Factory {
 	return Factory{
-		er:    er,
-		log:   log,
-		query: repo,
+		er:   er,
+		log:  log,
+		repo: repo,
 	}
+}
+
+func (f Factory) WithRepo(repo Repo) Factory {
+	f = NewFactory(f.er, f.log, f.repo)
+	f.repo = repo
+	return f
+}
+
+func (f Factory) WithEventRepo(er EventRepo) Factory {
+	f = NewFactory(f.er, f.log, f.repo)
+	f.er = er
+	return f
 }
 
 // 创建小说分两步：

@@ -1,0 +1,19 @@
+syntax = "proto3";
+package contents.v1;
+
+import "buf/validate/validate.proto";
+import "contents/novel/v1/novel.proto";
+import "ulid/ulid.proto";
+
+option go_package = "contents/v1";
+
+service QueryService {
+  rpc GetNovel(GetNovelRequest) returns (GetNovelResponse);
+}
+
+message GetNovelRequest {
+  ulid.ULID id = 1 [(buf.validate.field).required = true];
+}
+message GetNovelResponse {
+  contents.novel.v1.Novel novel = 1;
+}
