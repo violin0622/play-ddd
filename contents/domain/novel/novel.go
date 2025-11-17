@@ -10,6 +10,10 @@ import (
 	"play-ddd/common"
 	ev "play-ddd/contents/domain/novel/events"
 	"play-ddd/contents/domain/novel/vo"
+
+	"github.com/go-logr/logr"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ Aggregate = (*Novel)(nil)
@@ -49,17 +53,8 @@ type Novel struct {
 	updatedAt time.Time
 	createdAt time.Time
 
+	lg logr.Logger
 	er EventRepo
-}
-
-func New(
-	er EventRepo,
-) Novel {
-	return Novel{
-		er:    er,
-		toc:   vo.TOC{Chapters: []vo.Chapter{vo.SentinelChapter}},
-		cover: vo.NoCover,
-	}
 }
 
 func (n Novel) ID() ID                      { return n.id }
@@ -72,18 +67,10 @@ func (n Novel) Tags() []vo.Tag              { return n.tags }
 func (n Novel) Category() vo.Category       { return n.category }
 func (n Novel) Cover() vo.Cover             { return n.cover }
 func (n Novel) Status() vo.Status           { return n.s }
-func (n Novel) TOC() vo.TOC                 { return n.toc }
 func (n Novel) UpdatedAt() time.Time        { return n.updatedAt }
 func (n Novel) CreatedAt() time.Time        { return n.createdAt }
-func (n Novel) ChapterCount() int           { return len(n.toc.Chapters) - 1 }
-
-func (n Novel) LastChapter() (vo.Chapter, error) {
-	seq := len(n.toc.Chapters) - 1
-	if seq == 0 {
-		return vo.Chapter{}, errors.New(`no chapter yet`)
-	}
-	return n.toc.Chapters[seq], nil
-}
+func (n Novel) Chapters() []vo.Chapter      { return n.toc.GetChapters() }
+func (n Novel) ChapterCount() int           { return n.toc.ChapterCount() }
 
 func (n *Novel) ReplayEvents(es ...Event) error {
 	if len(es) == 0 {
@@ -96,7 +83,7 @@ func (n *Novel) ReplayEvents(es ...Event) error {
 
 	for i := range es {
 		if err := n.applyEvent(es[i]); err != nil {
-			return fmt.Errorf(`replay events: %w`, err)
+			return NewReplayEventsError(es[i], i, err)
 		}
 	}
 
@@ -137,49 +124,46 @@ func (n *Novel) UpdateDescription(ctx context.Context, d string) error {
 func (n *Novel) UploadNewChapter(
 	ctx context.Context, title string, wc int,
 ) error {
-	now := Now()
-	c := vo.Chapter{
-		Title:      title,
-		Sequence:   len(n.toc.Chapters),
-		WordCount:  wc,
-		UploadedAt: now,
-		UpdatedAt:  now,
-	}
-	n.toc.Chapters = append(n.toc.Chapters, c)
-	n.s = vo.Serial
-	n.updatedAt = now
-
-	return n.finish(ctx, ev.NewNewChapterUploaded(n.id, c))
-}
-
-func (n *Novel) WithdrawChapter(ctx context.Context) error {
-	seq := len(n.toc.Chapters) - 1
-	e := ev.NewChapterWithdrawed(n.id, n.toc.Chapters[seq])
-	if err := n.imposeChapterWithdrawed(e); err != nil {
+	c := n.toc.NextChapter(title, wc)
+	e := ev.NewNewChapterUploaded(n.id, c)
+	if err := n.imposeNewChapterUploaded(e); err != nil {
 		return err
 	}
 
 	return n.finish(ctx, e)
+}
+
+func (n *Novel) WithdrawChapter(ctx context.Context) error {
+	last := n.toc.ChapterCount()
+	c, err := n.toc.Get(last)
+	if err != nil {
+		return fmt.Errorf(`withdraw chapter: %w`, err)
+	}
+
+	if err = n.withdrawChapter(); err != nil {
+		return fmt.Errorf(`withdraw chapter: %w`, err)
+	}
+
+	return n.finish(ctx, ev.NewChapterWithdrawed(n.id, c))
 }
 
 func (n *Novel) ReviseChapter(
 	ctx context.Context, title string, wc, seq int,
 ) error {
-	if seq < 1 || seq > len(n.toc.Chapters) {
-		return fmt.Errorf(`invalid chapter sequence`)
+	c, err := n.toc.Get(seq)
+	if err != nil {
+		return fmt.Errorf(`revise chapter: %w`, err)
 	}
 
-	c := n.toc.Chapters[seq]
 	c.Title = title
 	c.UpdatedAt = Now()
 	c.WordCount = wc
 
-	e := ev.NewChapterRevised(n.id, c)
-	if err := n.imposeChapterRevised(e); err != nil {
-		return err
+	if c, err = n.reviseChapter(c); err != nil {
+		return fmt.Errorf(`revise chapter: %w`, err)
 	}
 
-	return n.finish(ctx, e)
+	return n.finish(ctx, ev.NewChapterRevised(n.id, c))
 }
 
 func (n *Novel) Complete(ctx context.Context) error {
@@ -189,7 +173,7 @@ func (n *Novel) Complete(ctx context.Context) error {
 
 func (n *Novel) NolongerUpdate(ctx context.Context) error {
 	n.s = vo.NolongerUpdate
-	return n.finish(ctx, ev.NewCompleted(n.id))
+	return n.finish(ctx, ev.NewNolongerUpdate(n.id))
 }
 
 // finish chech invariants and emit events.
@@ -203,9 +187,10 @@ func (n Novel) finish(ctx context.Context, e ...Event) error {
 
 func (n Novel) checkInvariants() error {
 	invarants := []func() error{
-		n.autherMustExist,
-		n.chapterSequenceOrdered,
-		n.noRepeatedOrLostedChapterSequence,
+		n.idMustExist,
+		n.statusNotUnknown,
+		n.draftHasNoChapter,
+		n.authorMustExist,
 		n.atMost10Tags,
 		n.totalWordCountIsSummitOfChapterWordCount,
 		n.updatedAtNewstChapterUpload,
@@ -220,7 +205,28 @@ func (n Novel) checkInvariants() error {
 	return nil
 }
 
-func (n Novel) autherMustExist() error {
+func (n Novel) draftHasNoChapter() error {
+	if n.s == vo.Draft && n.toc.ChapterCount() != 0 {
+		return status.New(codes.Internal, `Draft novel can't has chapter`).Err()
+	}
+	return nil
+}
+
+func (n Novel) statusNotUnknown() error {
+	if n.s.String() == `<unknown>` {
+		return errors.New(`unknown status`)
+	}
+	return nil
+}
+
+func (n Novel) idMustExist() error {
+	if n.id.IsZero() {
+		return errors.New(`id must exist`)
+	}
+	return nil
+}
+
+func (n Novel) authorMustExist() error {
 	if n.authorID.IsZero() {
 		return errors.New(`authorID must exist`)
 	}
@@ -228,35 +234,27 @@ func (n Novel) autherMustExist() error {
 }
 
 func (n Novel) updatedAtNewstChapterUpload() error {
-	last := len(n.toc.Chapters) - 1
-	if n.toc.Chapters[last].UploadedAt.Equal(n.updatedAt) {
+	if n.s == vo.Draft {
 		return nil
 	}
-	return errors.New(
-		`novel's update time should be identical to last chapter's update time`,
-	)
-}
 
-func (n Novel) chapterSequenceOrdered() error {
-	if slices.IsSortedFunc(n.toc.Chapters, vo.ChapterCmp) {
+	c, err := n.toc.LatestChapter()
+	if err != nil {
+		return err
+	}
+
+	if n.updatedAt == c.UploadedAt {
 		return nil
 	}
-	return errors.New(`chapter sequence not ordered`)
-}
 
-func (n Novel) noRepeatedOrLostedChapterSequence() error {
-	for seq := range len(n.toc.Chapters) {
-		if n.toc.Chapters[seq].Sequence != seq {
-			return errors.New(`chapter sequence missed or repeated`)
-		}
-	}
-
-	return nil
+	return status.New(codes.Internal,
+		`novel's update time should be identical to last chapter's upload time`,
+	).Err()
 }
 
 func (n Novel) totalWordCountIsSummitOfChapterWordCount() error {
 	sum := 0
-	for _, c := range n.toc.Chapters {
+	for _, c := range n.toc.GetChapters() {
 		sum += c.WordCount
 	}
 
@@ -316,10 +314,7 @@ func (n *Novel) imposeNovelCreated(e ev.NovelCreated) error {
 	n.cover = e.Cover
 	n.s = vo.Draft
 	n.category = e.Category
-	// n.toc.Chapters = append(n.toc.Chapters, e.FirstChapter)
-	// n.wordCount = e.FirstChapter.WordCount
 	n.createdAt = e.EmittedAt()
-	// n.updatedAt = e.FirstChapter.UploadedAt
 
 	return nil
 }
@@ -353,9 +348,12 @@ func (n *Novel) imposeNewChapterUploaded(e ev.NewChapterUploaded) error {
 		return ErrMutateCompletedNovel
 	}
 
-	n.toc.Chapters = append(n.toc.Chapters, e.Chapter)
-	n.wordCount += e.Chapter.WordCount
+	if err := n.toc.Append(e.Chapter); err != nil {
+		return err
+	}
+
 	n.s = vo.Serial
+	n.wordCount += e.Chapter.WordCount
 	n.updatedAt = e.Chapter.UploadedAt
 
 	return nil
@@ -363,46 +361,50 @@ func (n *Novel) imposeNewChapterUploaded(e ev.NewChapterUploaded) error {
 
 func (n *Novel) imposeChapterRevised(e ev.ChapterRevised) error {
 	if n == nil {
-		return errors.New(`nil pointer`)
+		return ErrNilPointer
 	}
 
-	seq := e.RevisedChapter.Sequence
-	if !n.isSequenceValid(seq) {
-		return errors.New(`invalid chapter sequence`)
-	}
-
-	c := &n.toc.Chapters[seq]
-	c.Title = e.RevisedChapter.Title
-	c.UpdatedAt = e.RevisedChapter.UpdatedAt
-	delta := c.WordCount - e.RevisedChapter.WordCount
-	c.WordCount = e.RevisedChapter.WordCount
-	n.wordCount -= delta
-
-	return nil
+	_, err := n.reviseChapter(e.RevisedChapter)
+	return err
 }
 
-func (n Novel) isSequenceValid(seq int) bool {
-	return seq < 1 || seq >= len(n.toc.Chapters)
+func (n *Novel) reviseChapter(c vo.Chapter) (origin vo.Chapter, err error) {
+	if origin, err = n.toc.Revise(c); err != nil {
+		return
+	}
+
+	delta := origin.WordCount - c.WordCount
+	n.wordCount -= delta
+
+	return
 }
 
 func (n *Novel) imposeChapterWithdrawed(ev.ChapterWithdrawed) error {
 	if n == nil {
-		return errors.New(`nil pointer`)
+		return ErrNilPointer
 	}
 
+	return n.withdrawChapter()
+}
+
+func (n *Novel) withdrawChapter() error {
 	if n.s == vo.Completed {
 		return ErrMutateCompletedNovel
 	}
 
-	seq := len(n.toc.Chapters) - 1
-	if seq <= 1 {
-		return errors.New(`can not withdraw first chapter`)
+	c, err := n.toc.Pop()
+	if err != nil {
+		return err
 	}
 
-	c := n.toc.Chapters[seq]
-	n.toc.Chapters = n.toc.Chapters[:seq]
 	n.wordCount -= c.WordCount
-	n.updatedAt = n.toc.Chapters[seq-1].UploadedAt
+	last := n.toc.ChapterCount()
+	lastC, err := n.toc.Get(last)
+	if errors.Is(err, vo.ErrInvalidChapterSequence) {
+		n.updatedAt = n.createdAt
+	} else {
+		n.updatedAt = lastC.UploadedAt
+	}
 
 	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/oklog/ulid/v2"
@@ -20,7 +22,7 @@ type query interface {
 
 type Factory struct {
 	query query
-	log   logr.Logger
+	lg    logr.Logger
 	er    EventRepo
 	repo  Repo
 }
@@ -32,19 +34,19 @@ func NewFactory(
 ) Factory {
 	return Factory{
 		er:   er,
-		log:  log,
+		lg:   log,
 		repo: repo,
 	}
 }
 
 func (f Factory) WithRepo(repo Repo) Factory {
-	f = NewFactory(f.er, f.log, f.repo)
+	f = NewFactory(f.er, f.lg, f.repo)
 	f.repo = repo
 	return f
 }
 
 func (f Factory) WithEventRepo(er EventRepo) Factory {
-	f = NewFactory(f.er, f.log, f.repo)
+	f = NewFactory(f.er, f.lg, f.repo)
 	f.er = er
 	return f
 }
@@ -68,6 +70,10 @@ func (f Factory) Create(
 		desc:     vo.Description(desc),
 		s:        vo.Draft,
 		er:       f.er,
+	}
+
+	if novel.toc, err = vo.NewTOC(); err != nil {
+		return mo.Err[Novel](fmt.Errorf(`create new novel: %w`, err))
 	}
 
 	if err := f.checkTitleUnique(ctx, authorID, title); err != nil {
@@ -122,6 +128,55 @@ func (f Factory) UploadFirstChapter(
 	}
 
 	return nil
+}
+
+// New returns a novel instance for replay.
+func (f Factory) New() Novel {
+	toc, _ := vo.NewTOC()
+	return Novel{er: f.er, lg: f.lg, toc: toc}
+}
+
+func (f Factory) RestoreFromRepo(
+	id, authorID ulid.ULID,
+	title, category, desc string,
+	tags []string,
+	status int,
+	cover url.URL,
+	chapters []vo.Chapter,
+	wordCount int,
+	updatedAt, createdAt time.Time) (
+	n Novel, err error,
+) {
+	defer wrapOnError(`resotre novel from repo`, &err)
+
+	n.id = id
+	n.authorID = authorID
+	n.category = vo.Category(category)
+	n.desc = vo.Description(desc)
+	n.s = vo.Status(status)
+	n.createdAt = createdAt
+	n.updatedAt = updatedAt
+	n.wordCount = wordCount
+
+	if n.toc, err = vo.NewTOC(chapters...); err != nil {
+		return
+	}
+
+	if n.title, err = vo.NewTitle(title); err != nil {
+		return
+	}
+
+	for i := range tags {
+		n.tags = append(n.tags, vo.Tag(tags[i]))
+	}
+
+	return n, n.checkInvariants()
+}
+
+func wrapOnError(msg string, err *error) {
+	if err != nil && *err != nil {
+		*err = fmt.Errorf(msg+`: %w`, *err)
+	}
 }
 
 func (f Factory) checkTitleUnique(

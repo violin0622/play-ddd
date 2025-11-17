@@ -1,10 +1,12 @@
 package novel
 
 import (
-	"errors"
 	"fmt"
 
 	"play-ddd/common"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var newInvariantsBrokenError = common.NewInvariantsBrokenError
@@ -17,19 +19,34 @@ func (n NotfoundError) Error() string {
 	return fmt.Sprintf(`not found: %s`, n.e)
 }
 
-func (n NotfoundError) Unwarp() error {
-	return n.e
+func (n NotfoundError) Unwarp() error { return n.e }
+
+func NewNotfoundError(e error) error { return NotfoundError{e} }
+
+type ReplayEventsError struct {
+	ev  Event
+	idx int
+	e   error
 }
 
-func NewNotfoundError(e error) error {
-	return NotfoundError{e}
+func NewReplayEventsError(ev Event, idx int, e error) error {
+	return ReplayEventsError{ev: ev, idx: idx, e: e}
+}
+
+func (n ReplayEventsError) Unwarp() error { return n.e }
+func (n ReplayEventsError) Error() string {
+	return fmt.Sprintf(`replay event index[%d], kind[%s], id[%s]: %s`,
+		n.idx, n.ev.Kind(), n.ev.ID(), n.e)
 }
 
 var (
-	ErrMutateCompletedNovel = errors.New(
-		`mutate a completed novel is not allowed`,
-	)
-	ErrTitleAlreadyExist = errors.New(
-		`the author has already created a novel of same title before`,
-	)
+	ErrMutateCompletedNovel = status.New(
+		codes.FailedPrecondition,
+		`mutate a completed novel is not allowed`).Err()
+
+	ErrTitleAlreadyExist = status.New(
+		codes.AlreadyExists,
+		`the author has already created a novel of same title before`).Err()
+
+	ErrNilPointer = status.New(codes.Internal, `nil pointer`).Err()
 )
