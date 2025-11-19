@@ -40,7 +40,7 @@ func (t TOC) GetChapters() (c []Chapter) {
 
 	c = make([]Chapter, len(t.chapters)-1)
 	copy(c, t.chapters[1:])
-	return
+	return c
 }
 
 func (t TOC) ChapterCount() int {
@@ -54,7 +54,7 @@ func (t TOC) NextChapter(title string, wordCount int) (c Chapter) {
 	c.Title = title
 	c.WordCount = wordCount
 
-	return
+	return c
 }
 
 func (t *TOC) Append(c Chapter) error {
@@ -126,7 +126,8 @@ func (t TOC) beginFromSentinel() error {
 func (t TOC) noRepeatedOrLostedChapterSequence() error {
 	for seq := range len(t.chapters) {
 		if t.chapters[seq].Sequence != seq {
-			return status.New(codes.Internal, `chapter sequence missed or repeated`).Err()
+			return status.New(codes.Internal, `chapter sequence missed or repeated`).
+				Err()
 		}
 	}
 

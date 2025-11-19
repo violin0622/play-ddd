@@ -7,13 +7,13 @@ import (
 	"slices"
 	"time"
 
-	"play-ddd/common"
-	ev "play-ddd/contents/domain/novel/events"
-	"play-ddd/contents/domain/novel/vo"
-
 	"github.com/go-logr/logr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"play-ddd/common"
+	ev "play-ddd/contents/domain/novel/events"
+	"play-ddd/contents/domain/novel/vo"
 )
 
 var _ Aggregate = (*Novel)(nil)
@@ -59,7 +59,7 @@ type Novel struct {
 
 func (n Novel) ID() ID                      { return n.id }
 func (n Novel) Kind() string                { return `Novel` }
-func (n Novel) WordCounts() int             { return n.wordCount }
+func (n Novel) WordCount() int              { return n.wordCount }
 func (n Novel) Title() vo.Title             { return n.title }
 func (n Novel) AuthorID() ID                { return n.authorID }
 func (n Novel) Description() vo.Description { return n.desc }
@@ -243,7 +243,7 @@ func (n Novel) updatedAtNewstChapterUpload() error {
 		return err
 	}
 
-	if n.updatedAt == c.UploadedAt {
+	if n.updatedAt.Equal(c.UploadedAt) {
 		return nil
 	}
 
@@ -370,13 +370,13 @@ func (n *Novel) imposeChapterRevised(e ev.ChapterRevised) error {
 
 func (n *Novel) reviseChapter(c vo.Chapter) (origin vo.Chapter, err error) {
 	if origin, err = n.toc.Revise(c); err != nil {
-		return
+		return origin, err
 	}
 
 	delta := origin.WordCount - c.WordCount
 	n.wordCount -= delta
 
-	return
+	return origin, err
 }
 
 func (n *Novel) imposeChapterWithdrawed(ev.ChapterWithdrawed) error {

@@ -17,7 +17,7 @@ type Event[EID, AID comparable] interface {
 }
 
 type EventRepo[EID, AID comparable] interface {
-	Fetch(context.Context, AID) ([]Event[EID, AID], error)
+	// Fetch(context.Context, AID) ([]Event[EID, AID], error)
 	Append(context.Context, ...Event[EID, AID]) error
 }
 

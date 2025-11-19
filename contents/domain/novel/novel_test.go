@@ -142,7 +142,7 @@ var _ = Describe(`NovelReplayEvents`, func() {
 		})
 
 		It(`should maintain correct word count and timestamps`, func() {
-			Ω(n.WordCounts()).Should(Equal(2700)) // 1200 + 1500
+			Ω(n.WordCount()).Should(Equal(2700)) // 1200 + 1500
 			Ω(n.CreatedAt()).ShouldNot(BeZero())
 			Ω(n.UpdatedAt()).ShouldNot(BeZero())
 		})

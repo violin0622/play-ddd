@@ -3,10 +3,10 @@ package novel
 import (
 	"fmt"
 
-	"play-ddd/common"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"play-ddd/common"
 )
 
 var newInvariantsBrokenError = common.NewInvariantsBrokenError

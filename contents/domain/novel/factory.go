@@ -136,7 +136,8 @@ func (f Factory) New() Novel {
 	return Novel{er: f.er, lg: f.lg, toc: toc}
 }
 
-func (f Factory) RestoreFromRepo(
+// Restore is only intend to be used by infra/repo.
+func (f Factory) Restore(
 	id, authorID ulid.ULID,
 	title, category, desc string,
 	tags []string,
@@ -159,11 +160,11 @@ func (f Factory) RestoreFromRepo(
 	n.wordCount = wordCount
 
 	if n.toc, err = vo.NewTOC(chapters...); err != nil {
-		return
+		return n, err
 	}
 
 	if n.title, err = vo.NewTitle(title); err != nil {
-		return
+		return n, err
 	}
 
 	for i := range tags {
