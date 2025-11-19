@@ -9,6 +9,8 @@ import (
 	ulidpb "play-ddd/proto/gen/go/ulid"
 )
 
+var _ contv1.CmdServiceServer = (*cmdServiceServer)(nil)
+
 func NewCmdService(
 	ah app.CommandHandler,
 ) cmdServiceServer {
@@ -18,7 +20,8 @@ func NewCmdService(
 }
 
 type cmdServiceServer struct {
-	_  contv1.UnimplementedCmdServiceServer
+	contv1.UnimplementedCmdServiceServer
+
 	ah app.CommandHandler
 }
 

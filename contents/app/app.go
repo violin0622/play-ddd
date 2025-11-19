@@ -26,6 +26,10 @@ func NewCommandHandler(
 	}
 }
 
+func NewQueryHandler() QueryHandler {
+	return QueryHandler{}
+}
+
 type QueryHandler struct {
 	repo Repo
 	log  logr.Logger
