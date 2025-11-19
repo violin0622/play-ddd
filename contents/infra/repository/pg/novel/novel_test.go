@@ -1,0 +1,114 @@
+package novel_test
+
+import (
+	"net/url"
+	"testing"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/oklog/ulid/v2"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"gorm.io/gorm"
+
+	"play-ddd/contents/domain/novel"
+	"play-ddd/contents/domain/novel/vo"
+	"play-ddd/contents/infra/repository/pg"
+	novelrepo "play-ddd/contents/infra/repository/pg/novel"
+)
+
+func TestControllers(t *testing.T) {
+	RegisterFailHandler(Fail)
+
+	RunSpecs(t, "Novel Suite")
+}
+
+var db *gorm.DB
+
+var _ = BeforeSuite(func() {
+	var err error
+	db, err = pg.InitDB(pg.DSN)
+	Ω(err).ShouldNot(HaveOccurred())
+})
+
+var _ = Describe(`NoveRepo`, func() {
+	var (
+		now      = time.Now().Truncate(time.Millisecond)
+		authorID = ulid.Make()
+		novelID  = ulid.Make()
+		title    = `An Awesome Story`
+		desc     = `The story of the brave one.`
+		category = `fantacy`
+		tags     = []string{`DnD`, `Sole Famale`, `Legacy`}
+		status   = vo.Serial
+		chapters = []vo.Chapter{{
+			Title:      `Birth of The Brave One`,
+			Sequence:   1,
+			WordCount:  10,
+			UploadedAt: now.Add(-time.Millisecond),
+			UpdatedAt:  now.Add(-time.Millisecond),
+		}, {
+			Title:      `Death of The Brave One`,
+			Sequence:   2,
+			WordCount:  20,
+			UploadedAt: now,
+			UpdatedAt:  now,
+		}}
+		wordCount = 30
+		createdAt = now
+		updatedAt = now
+
+		fact = novel.NewFactory(nil, logr.Discard(), nil)
+	)
+
+	It(`save novel`, func(ctx SpecContext) {
+		repo := novelrepo.New(db)
+		novel, err := fact.Restore(
+			novelID,
+			authorID,
+			title,
+			category,
+			desc,
+			tags,
+			int(status),
+			url.URL{},
+			chapters,
+			wordCount,
+			updatedAt,
+			createdAt,
+		)
+
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(repo.Save(ctx, novel)).Should(Succeed())
+	})
+
+	It(`load novel`, func(ctx SpecContext) {
+		repo := novelrepo.New(db)
+		novel, err := repo.Get(ctx, novelID)
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(novel.ID()).Should(BeEquivalentTo(novelID))
+		Ω(novel.Title()).Should(BeEquivalentTo(title))
+		Ω(novel.AuthorID()).Should(BeEquivalentTo(authorID))
+		Ω(novel.Description()).Should(BeEquivalentTo(desc))
+		Ω(novel.Category()).Should(BeEquivalentTo(category))
+		Ω(novel.Tags()).Should(And(HaveLen(len(tags))))
+		Ω(novel.Status()).Should(BeEquivalentTo(vo.Serial))
+		Ω(novel.ChapterCount()).Should(Equal(len(chapters)))
+		Ω(novel.WordCount()).Should(Equal(wordCount))
+		Ω(novel.UpdatedAt()).Should(BeEquivalentTo(updatedAt))
+		Ω(novel.CreatedAt()).Should(BeEquivalentTo(createdAt))
+
+		for i := range tags {
+			Ω(novel.Tags()[i]).Should(BeEquivalentTo(tags[i]))
+		}
+
+		for i, c := range chapters {
+			nc := novel.Chapters()[i]
+			Ω(nc.Title).Should(BeEquivalentTo(c.Title))
+			Ω(nc.Sequence).Should(Equal(c.Sequence))
+			Ω(nc.WordCount).Should(Equal(c.WordCount))
+			Ω(nc.UploadedAt).Should(Equal(c.UploadedAt))
+			Ω(nc.UpdatedAt).Should(Equal(c.UpdatedAt))
+		}
+	})
+})

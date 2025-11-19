@@ -3,12 +3,10 @@ package novel
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/puzpuzpuz/xsync/v4"
 
 	"play-ddd/contents/domain/novel"
-	"play-ddd/contents/infra/eventstore/fake"
 )
 
 var _ novel.Repo = (*repo)(nil)
@@ -19,6 +17,10 @@ type repo struct {
 
 func New() repo {
 	return repo{m: xsync.NewMap[novel.ID, novel.Novel]()}
+}
+
+func Newx(m *xsync.Map[novel.ID, novel.Novel]) repo {
+	return repo{m: m}
 }
 
 // Get implements domain.AggregateRepo.
@@ -61,36 +63,36 @@ func (r repo) Update(
 	return err
 }
 
-var _ novel.Repo = (*esrepo)(nil)
+// var _ novel.Repo = (*esrepo)(nil)
 
-type esrepo struct {
-	f novel.EventRepo
-}
-
-func NewEventSourceRepo(es novel.EventRepo) esrepo {
-	return esrepo{f: fake.New[novel.ID, novel.ID]()}
-}
-
-func (e esrepo) Get(ctx context.Context, id novel.ID) (novel.Novel, error) {
-	es, err := e.f.Fetch(ctx, id)
-	if err != nil {
-		return novel.Novel{}, fmt.Errorf(`get: %w`, err)
-	}
-
-	n := novel.New(e.f)
-	if err = n.ReplayEvents(es...); err != nil {
-		return novel.Novel{}, fmt.Errorf(`get: %w`, err)
-	}
-
-	return n, nil
-}
-
-func (esrepo) Save(context.Context, novel.Novel) error { return nil }
-
-func (e esrepo) Update(
-	context.Context,
-	novel.ID,
-	func(context.Context, *novel.Novel) error,
-) error {
-	return nil
-}
+// type esrepo struct {
+// 	f novel.EventRepo
+// }
+//
+// func NewEventSourceRepo(es novel.EventRepo) esrepo {
+// 	return esrepo{f: fake.New[novel.ID, novel.ID]()}
+// }
+//
+// func (e esrepo) Get(ctx context.Context, id novel.ID) (novel.Novel, error) {
+// 	es, err := e.f.Fetch(ctx, id)
+// 	if err != nil {
+// 		return novel.Novel{}, fmt.Errorf(`get: %w`, err)
+// 	}
+//
+// 	n := novel.New(e.f)
+// 	if err = n.ReplayEvents(es...); err != nil {
+// 		return novel.Novel{}, fmt.Errorf(`get: %w`, err)
+// 	}
+//
+// 	return n, nil
+// }
+//
+// func (esrepo) Save(context.Context, novel.Novel) error { return nil }
+//
+// func (e esrepo) Update(
+// 	context.Context,
+// 	novel.ID,
+// 	func(context.Context, *novel.Novel) error,
+// ) error {
+// 	return nil
+// }
