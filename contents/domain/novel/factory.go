@@ -16,39 +16,34 @@ import (
 )
 
 // If not found, implements should return NotfoundError.
-type query interface {
+type Query interface {
 	ByAuthorAndTitle(context.Context, ID, string) mo.Result[Novel]
 }
 
 type Factory struct {
-	query query
+	query Query
 	lg    logr.Logger
 	er    EventRepo
-	repo  Repo
 }
 
 func NewFactory(
-	er EventRepo,
 	log logr.Logger,
-	repo Repo,
 ) Factory {
 	return Factory{
-		er:   er,
-		lg:   log,
-		repo: repo,
+		lg: log,
 	}
 }
 
-func (f Factory) WithRepo(repo Repo) Factory {
-	f = NewFactory(f.er, f.lg, f.repo)
-	f.repo = repo
-	return f
+func (f Factory) WithQuery(q Query) Factory {
+	nf := f
+	nf.query = q
+	return nf
 }
 
 func (f Factory) WithEventRepo(er EventRepo) Factory {
-	f = NewFactory(f.er, f.lg, f.repo)
-	f.er = er
-	return f
+	nf := f
+	nf.er = er
+	return nf
 }
 
 // 创建小说分两步：
@@ -64,12 +59,14 @@ func (f Factory) Create(
 ) mo.Result[Novel] {
 	var err error
 	novel := Novel{
-		id:       ulid.Make(),
-		authorID: authorID,
-		category: vo.Category(category),
-		desc:     vo.Description(desc),
-		s:        vo.Draft,
-		er:       f.er,
+		id:        ulid.Make(),
+		authorID:  authorID,
+		category:  vo.Category(category),
+		desc:      vo.Description(desc),
+		s:         vo.Draft,
+		er:        f.er,
+		createdAt: time.Now(),
+		updatedAt: time.Now(),
 	}
 
 	if novel.toc, err = vo.NewTOC(); err != nil {
@@ -88,7 +85,7 @@ func (f Factory) Create(
 		novel.tags = append(novel.tags, vo.Tag(tags[i]))
 	}
 
-	e := ev.NewNovelCreated(
+	e := ev.NewNovelCreatedV2(
 		novel.id,
 		authorID,
 		novel.title,
@@ -101,33 +98,6 @@ func (f Factory) Create(
 	}
 
 	return mo.Ok(novel)
-}
-
-func (f Factory) UploadFirstChapter(
-	ctx context.Context, id ID, title string, wc int,
-) error {
-	novel, err := f.repo.Get(ctx, id)
-	if err != nil {
-		return fmt.Errorf(`upload first chapter: %w`, err)
-	}
-
-	if novel.s != vo.Draft {
-		return fmt.Errorf(`novel is not a draft`)
-	}
-
-	if err = novel.UploadNewChapter(ctx, title, wc); err != nil {
-		return fmt.Errorf(`upload first chapter: %w`, err)
-	}
-
-	if err = f.repo.Save(ctx, novel); err != nil {
-		return fmt.Errorf(`upload first chapter: %w`, err)
-	}
-
-	if err = f.er.Append(ctx, ev.NewNovelPublished(novel.id)); err != nil {
-		return fmt.Errorf(`upload first chapter: %w`, err)
-	}
-
-	return nil
 }
 
 // New returns a novel instance for replay.
@@ -185,6 +155,9 @@ func (f Factory) checkTitleUnique(
 	authorID ID,
 	title string,
 ) error {
+	if f.query == nil {
+		return fmt.Errorf(`nil query repo`)
+	}
 	res := f.query.ByAuthorAndTitle(ctx, authorID, title)
 	var notfound NotfoundError
 

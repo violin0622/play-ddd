@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"play-ddd/cmd/contents"
 )
 
 func New() *cobra.Command {
@@ -11,10 +13,10 @@ func New() *cobra.Command {
 		Use:     `play-ddd`,
 		Short:   `Play DDD Example Program.`,
 		Long:    slogan,
-		Version: fmt.Sprintf(versionTpl, Version, GitSHA, BuiltAt, GoVersion),
+		Version: fmt.Sprintf(versionTpl, Version, GitSHA, GoVersion, BuiltAt),
 	}
 
-	root.AddCommand(Contents())
+	root.AddCommand(contents.Contents())
 	return root
 }
 

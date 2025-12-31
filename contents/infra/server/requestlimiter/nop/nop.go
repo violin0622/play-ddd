@@ -1,19 +1,31 @@
 package nop
 
 import (
-	"golang.org/x/time/rate"
+	"math"
+	"sync/atomic"
 
 	requestlimter "play-ddd/contents/infra/server/requestlimiter"
 )
 
-type nop struct{}
+type nop struct {
+	total atomic.Uint64
+}
 
 func New() nop { return nop{} }
 
-func (nop) Set(r rate.Limit, b int) {}
-
-func (nop) Request(
+func (n *nop) Request(
 	requestlimter.RequestInfo,
 ) (r requestlimter.Result) {
+	n.total.Add(1)
 	return r
+}
+
+func (n *nop) Stats() requestlimter.Stats {
+	return requestlimter.Stats{
+		Total:  n.total.Load(),
+		Denied: 0,
+		Limit:  math.NaN(),
+		Tokens: math.NaN(),
+		Burst:  math.MaxInt,
+	}
 }

@@ -1,6 +1,7 @@
 package events
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -28,9 +29,10 @@ func NewTagsUpdated(aid ID, prev, cur []vo.Tag) TagsUpdated {
 	}
 }
 
-func (t TagsUpdated) AggID() ID            { return t.aid }
-func (t TagsUpdated) AggKind() string      { return `Novel` }
-func (t TagsUpdated) EmittedAt() time.Time { return t.at }
-func (t TagsUpdated) ID() ID               { return t.id }
-func (t TagsUpdated) Kind() string         { return `TagsUpdated` }
-func (t TagsUpdated) String() string       { return formatEvent(t) }
+func (t TagsUpdated) AggID() ID                { return t.aid }
+func (t TagsUpdated) AggKind() string          { return `Novel` }
+func (t TagsUpdated) EmittedAt() time.Time     { return t.at }
+func (t TagsUpdated) ID() ID                   { return t.id }
+func (t TagsUpdated) Kind() string             { return `TagsUpdated` }
+func (t TagsUpdated) String() string           { return formatEvent(t) }
+func (t TagsUpdated) Payload() ([]byte, error) { return json.Marshal(t) }

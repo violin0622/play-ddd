@@ -23,8 +23,7 @@ const (
 
 type ULID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Low           uint64                 `protobuf:"varint,1,opt,name=low,proto3" json:"low,omitempty"`
-	High          uint64                 `protobuf:"varint,2,opt,name=high,proto3" json:"high,omitempty"`
+	Ulid          string                 `protobuf:"bytes,1,opt,name=ulid,proto3" json:"ulid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,28 +58,20 @@ func (*ULID) Descriptor() ([]byte, []int) {
 	return file_ulid_ulid_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ULID) GetLow() uint64 {
+func (x *ULID) GetUlid() string {
 	if x != nil {
-		return x.Low
+		return x.Ulid
 	}
-	return 0
-}
-
-func (x *ULID) GetHigh() uint64 {
-	if x != nil {
-		return x.High
-	}
-	return 0
+	return ""
 }
 
 var File_ulid_ulid_proto protoreflect.FileDescriptor
 
 const file_ulid_ulid_proto_rawDesc = "" +
 	"\n" +
-	"\x0fulid/ulid.proto\x12\x04ulid\",\n" +
-	"\x04ULID\x12\x10\n" +
-	"\x03low\x18\x01 \x01(\x04R\x03low\x12\x12\n" +
-	"\x04high\x18\x02 \x01(\x04R\x04highBa\n" +
+	"\x0fulid/ulid.proto\x12\x04ulid\"\x1a\n" +
+	"\x04ULID\x12\x12\n" +
+	"\x04ulid\x18\x01 \x01(\tR\x04ulidBa\n" +
 	"\bcom.ulidB\tUlidProtoP\x01Z\x1aplay-ddd/proto/gen/go/ulid\xa2\x02\x03UXX\xaa\x02\x04Ulid\xca\x02\x04Ulid\xe2\x02\x10Ulid\\GPBMetadata\xea\x02\x04Ulidb\x06proto3"
 
 var (

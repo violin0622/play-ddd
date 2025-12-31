@@ -40,17 +40,17 @@ func (c *Chapter) Revise(
 	e := ChapterRevised{
 		id:  ulid.Make(),
 		aid: c.id,
-		seq: c.seq,
+		Seq: c.seq,
 	}
 
 	if title != `` {
-		e.title = title
+		e.Title = title
 	}
 	if mainContent != `` {
-		e.mainContent = mainContent
+		e.MainContent = mainContent
 	}
 	if exContent != `` {
-		e.extraContent = exContent
+		e.ExtraContent = exContent
 	}
 
 	if err := c.imposeReviseEvent(e); err != nil {
@@ -61,14 +61,14 @@ func (c *Chapter) Revise(
 }
 
 func (c *Chapter) imposeReviseEvent(e ChapterRevised) error {
-	if e.title != `` {
-		c.title = e.title
+	if e.Title != `` {
+		c.title = e.Title
 	}
-	if e.mainContent != `` {
-		c.mainContent = e.mainContent
+	if e.MainContent != `` {
+		c.mainContent = e.MainContent
 	}
-	if e.extraContent != `` {
-		c.extraContent = e.extraContent
+	if e.ExtraContent != `` {
+		c.extraContent = e.ExtraContent
 	}
 	return nil
 }

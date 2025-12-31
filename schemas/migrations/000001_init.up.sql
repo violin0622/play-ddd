@@ -3,29 +3,29 @@ BEGIN;
 -- SET client_encoding = 'UTF8';
 CREATE TABLE IF NOT EXISTS public.novels (
     id character(26) NOT NULL,
-    created_at bigint NOT NULL,
-    updated_at bigint NOT NULL,
-    deleted_at bigint NOT NULL,
-    title character varying(256) NOT NULL,
-    category character varying(256) NOT NULL,
-    description character varying(1024) DEFAULT ''::character varying,
-    tags jsonb DEFAULT '[]'::jsonb NOT NULL,
-    author_id character(26) NOT NULL,
-    toc jsonb DEFAULT '[]'::jsonb NOT NULL,
-    status bigint DEFAULT 1 NOT NULL,
-    word_count bigint
+    created_ts bigint NOT NULL DEFAULT 0,
+    updated_ts bigint NOT NULL DEFAULT 0,
+    deleted_ts bigint NOT NULL DEFAULT 0,
+    author_id character(26) NOT NULL DEFAULT ''::character varying,
+    title character varying(256) NOT NULL DEFAULT ''::character varying,
+    category character varying(256) NOT NULL DEFAULT ''::character varying,
+    description character varying(1024) NOT NULL DEFAULT ''::character varying,
+    tags jsonb NOT NULL DEFAULT '[]'::jsonb,
+    toc jsonb NOT NULL DEFAULT '[]'::jsonb,
+    status bigint NOT NULL DEFAULT 1,
+    word_count bigint NOT NULL DEFAULT 0
 );
 
 ALTER TABLE public.novels OWNER TO postgres;
 
-COMMENT ON COLUMN public.novels.created_at IS 'autofilled create milliseconds unix timestamp.';
-COMMENT ON COLUMN public.novels.updated_at IS 'autofilled update milliseconds unix timestamp.';
-COMMENT ON COLUMN public.novels.deleted_at IS 'autofilled delete milliseconds unix timestamp. Used as soft deletion.';
+COMMENT ON COLUMN public.novels.created_ts IS 'create milliseconds unix timestamp.';
+COMMENT ON COLUMN public.novels.updated_ts IS 'update milliseconds unix timestamp.';
+COMMENT ON COLUMN public.novels.deleted_ts IS 'delete milliseconds unix timestamp. Used as soft deletion.';
 
 ALTER TABLE ONLY public.novels
     ADD CONSTRAINT novels_pkey PRIMARY KEY (id);
 
 
-CREATE INDEX idx_novels_deleted_at ON public.novels USING btree (deleted_at, deleted_at);
+CREATE INDEX idx_novels_deleted_ts ON public.novels USING btree (deleted_ts, deleted_ts);
 
 COMMIT;

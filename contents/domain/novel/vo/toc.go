@@ -108,12 +108,12 @@ func (t TOC) checkInvariants() error {
 	return nil
 }
 
-func (t TOC) atleastOneChapter() error {
-	if len(t.chapters) < 2 {
-		return status.New(codes.Internal, `at least one chapter`).Err()
-	}
-	return nil
-}
+// func (t TOC) atleastOneChapter() error {
+// 	if len(t.chapters) < 2 {
+// 		return status.New(codes.Internal, `at least one chapter`).Err()
+// 	}
+// 	return nil
+// }
 
 func (t TOC) beginFromSentinel() error {
 	if len(t.chapters) < 1 ||

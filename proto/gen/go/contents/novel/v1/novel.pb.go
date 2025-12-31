@@ -23,55 +23,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Gender int32
-
-const (
-	Gender_GENDER_UNSPECIFIED Gender = 0
-	Gender_GENDER_MALE        Gender = 1
-	Gender_GENDER_FAMALE      Gender = 2
-)
-
-// Enum value maps for Gender.
-var (
-	Gender_name = map[int32]string{
-		0: "GENDER_UNSPECIFIED",
-		1: "GENDER_MALE",
-		2: "GENDER_FAMALE",
-	}
-	Gender_value = map[string]int32{
-		"GENDER_UNSPECIFIED": 0,
-		"GENDER_MALE":        1,
-		"GENDER_FAMALE":      2,
-	}
-)
-
-func (x Gender) Enum() *Gender {
-	p := new(Gender)
-	*p = x
-	return p
-}
-
-func (x Gender) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Gender) Descriptor() protoreflect.EnumDescriptor {
-	return file_contents_novel_v1_novel_proto_enumTypes[0].Descriptor()
-}
-
-func (Gender) Type() protoreflect.EnumType {
-	return &file_contents_novel_v1_novel_proto_enumTypes[0]
-}
-
-func (x Gender) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Gender.Descriptor instead.
-func (Gender) EnumDescriptor() ([]byte, []int) {
-	return file_contents_novel_v1_novel_proto_rawDescGZIP(), []int{0}
-}
-
 type Novel_Status int32
 
 const (
@@ -111,11 +62,11 @@ func (x Novel_Status) String() string {
 }
 
 func (Novel_Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_contents_novel_v1_novel_proto_enumTypes[1].Descriptor()
+	return file_contents_novel_v1_novel_proto_enumTypes[0].Descriptor()
 }
 
 func (Novel_Status) Type() protoreflect.EnumType {
-	return &file_contents_novel_v1_novel_proto_enumTypes[1]
+	return &file_contents_novel_v1_novel_proto_enumTypes[0]
 }
 
 func (x Novel_Status) Number() protoreflect.EnumNumber {
@@ -236,14 +187,11 @@ func (x *Novel) GetUpdatedAt() *timestamppb.Timestamp {
 }
 
 type Author struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// user id
 	Id            *ulid.ULID             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	AvatarUrl     string                 `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	Saying        string                 `protobuf:"bytes,4,opt,name=saying,proto3" json:"saying,omitempty"`
 	Extra         map[string]string      `protobuf:"bytes,5,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	JoinedAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
-	ActivitedAt   *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=activited_at,json=activitedAt,proto3" json:"activited_at,omitempty"`
+	RegisteredAt  *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -285,27 +233,6 @@ func (x *Author) GetId() *ulid.ULID {
 	return nil
 }
 
-func (x *Author) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *Author) GetAvatarUrl() string {
-	if x != nil {
-		return x.AvatarUrl
-	}
-	return ""
-}
-
-func (x *Author) GetSaying() string {
-	if x != nil {
-		return x.Saying
-	}
-	return ""
-}
-
 func (x *Author) GetExtra() map[string]string {
 	if x != nil {
 		return x.Extra
@@ -313,16 +240,9 @@ func (x *Author) GetExtra() map[string]string {
 	return nil
 }
 
-func (x *Author) GetJoinedAt() *timestamppb.Timestamp {
+func (x *Author) GetRegisteredAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.JoinedAt
-	}
-	return nil
-}
-
-func (x *Author) GetActivitedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ActivitedAt
+		return x.RegisteredAt
 	}
 	return nil
 }
@@ -426,26 +346,17 @@ const file_contents_novel_v1_novel_proto_rawDesc = "" +
 	"\fSTATUS_DRAFT\x10\x01\x12\x11\n" +
 	"\rSTATUS_SERIAL\x10\x02\x12\x19\n" +
 	"\x15STATUS_NOLONGERUPDATE\x10\x03\x12\x14\n" +
-	"\x10STATUS_COMPLETED\x10\x04\"\xdd\x02\n" +
+	"\x10STATUS_COMPLETED\x10\x04\"\xdb\x01\n" +
 	"\x06Author\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\v2\n" +
-	".ulid.ULIDR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
-	"\n" +
-	"avatar_url\x18\x03 \x01(\tR\tavatarUrl\x12\x16\n" +
-	"\x06saying\x18\x04 \x01(\tR\x06saying\x12:\n" +
-	"\x05extra\x18\x05 \x03(\v2$.contents.novel.v1.Author.ExtraEntryR\x05extra\x127\n" +
-	"\tjoined_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\x12=\n" +
-	"\factivited_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\vactivitedAt\x1a8\n" +
+	".ulid.ULIDR\x02id\x12:\n" +
+	"\x05extra\x18\x05 \x03(\v2$.contents.novel.v1.Author.ExtraEntryR\x05extra\x12?\n" +
+	"\rregistered_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt\x1a8\n" +
 	"\n" +
 	"ExtraEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*D\n" +
-	"\x06Gender\x12\x16\n" +
-	"\x12GENDER_UNSPECIFIED\x10\x00\x12\x0f\n" +
-	"\vGENDER_MALE\x10\x01\x12\x11\n" +
-	"\rGENDER_FAMALE\x10\x02B\xba\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\xba\x01\n" +
 	"\x15com.contents.novel.v1B\n" +
 	"NovelProtoP\x01Z/play-ddd/proto/gen/go/contents/novel/v1;novelv1\xa2\x02\x03CNX\xaa\x02\x11Contents.Novel.V1\xca\x02\x11Contents\\Novel\\V1\xe2\x02\x1dContents\\Novel\\V1\\GPBMetadata\xea\x02\x13Contents::Novel::V1b\x06proto3"
 
@@ -461,34 +372,32 @@ func file_contents_novel_v1_novel_proto_rawDescGZIP() []byte {
 	return file_contents_novel_v1_novel_proto_rawDescData
 }
 
-var file_contents_novel_v1_novel_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_contents_novel_v1_novel_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_contents_novel_v1_novel_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_contents_novel_v1_novel_proto_goTypes = []any{
-	(Gender)(0),                   // 0: contents.novel.v1.Gender
-	(Novel_Status)(0),             // 1: contents.novel.v1.Novel.Status
-	(*Novel)(nil),                 // 2: contents.novel.v1.Novel
-	(*Author)(nil),                // 3: contents.novel.v1.Author
-	(*Novel_Chapter)(nil),         // 4: contents.novel.v1.Novel.Chapter
-	nil,                           // 5: contents.novel.v1.Author.ExtraEntry
-	(*ulid.ULID)(nil),             // 6: ulid.ULID
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(Novel_Status)(0),             // 0: contents.novel.v1.Novel.Status
+	(*Novel)(nil),                 // 1: contents.novel.v1.Novel
+	(*Author)(nil),                // 2: contents.novel.v1.Author
+	(*Novel_Chapter)(nil),         // 3: contents.novel.v1.Novel.Chapter
+	nil,                           // 4: contents.novel.v1.Author.ExtraEntry
+	(*ulid.ULID)(nil),             // 5: ulid.ULID
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_contents_novel_v1_novel_proto_depIdxs = []int32{
-	6,  // 0: contents.novel.v1.Novel.id:type_name -> ulid.ULID
-	3,  // 1: contents.novel.v1.Novel.author:type_name -> contents.novel.v1.Author
-	4,  // 2: contents.novel.v1.Novel.chapters:type_name -> contents.novel.v1.Novel.Chapter
-	7,  // 3: contents.novel.v1.Novel.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 4: contents.novel.v1.Novel.updated_at:type_name -> google.protobuf.Timestamp
-	6,  // 5: contents.novel.v1.Author.id:type_name -> ulid.ULID
-	5,  // 6: contents.novel.v1.Author.extra:type_name -> contents.novel.v1.Author.ExtraEntry
-	7,  // 7: contents.novel.v1.Author.joined_at:type_name -> google.protobuf.Timestamp
-	7,  // 8: contents.novel.v1.Author.activited_at:type_name -> google.protobuf.Timestamp
-	6,  // 9: contents.novel.v1.Novel.Chapter.id:type_name -> ulid.ULID
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	5, // 0: contents.novel.v1.Novel.id:type_name -> ulid.ULID
+	2, // 1: contents.novel.v1.Novel.author:type_name -> contents.novel.v1.Author
+	3, // 2: contents.novel.v1.Novel.chapters:type_name -> contents.novel.v1.Novel.Chapter
+	6, // 3: contents.novel.v1.Novel.created_at:type_name -> google.protobuf.Timestamp
+	6, // 4: contents.novel.v1.Novel.updated_at:type_name -> google.protobuf.Timestamp
+	5, // 5: contents.novel.v1.Author.id:type_name -> ulid.ULID
+	4, // 6: contents.novel.v1.Author.extra:type_name -> contents.novel.v1.Author.ExtraEntry
+	6, // 7: contents.novel.v1.Author.registered_at:type_name -> google.protobuf.Timestamp
+	5, // 8: contents.novel.v1.Novel.Chapter.id:type_name -> ulid.ULID
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_contents_novel_v1_novel_proto_init() }
@@ -501,7 +410,7 @@ func file_contents_novel_v1_novel_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_contents_novel_v1_novel_proto_rawDesc), len(file_contents_novel_v1_novel_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,

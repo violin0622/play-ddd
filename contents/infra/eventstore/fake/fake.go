@@ -7,6 +7,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/puzpuzpuz/xsync/v4"
 
+	"play-ddd/common"
 	"play-ddd/contents/domain"
 	"play-ddd/contents/domain/novel"
 )
@@ -21,20 +22,20 @@ var (
 )
 
 // fake is a in memory event store for testing.
-type fake[EID, AID comparable] struct {
-	m *xsync.Map[AID, []domain.Event[EID, AID]]
+type fake[AID, EID comparable] struct {
+	m *xsync.Map[AID, []common.Event[AID, EID]]
 }
 
-func New[EID, AID comparable]() fake[EID, AID] {
-	return fake[EID, AID]{
-		m: xsync.NewMap[AID, []domain.Event[EID, AID]](),
+func New[EID, AID comparable]() fake[AID, EID] {
+	return fake[AID, EID]{
+		m: xsync.NewMap[AID, []common.Event[AID, EID]](),
 	}
 }
 
 // Append implements domain.EventRepo.
-func (f fake[EID, AID]) Append(
+func (f fake[AID, EID]) Append(
 	_ context.Context,
-	es ...domain.Event[EID, AID],
+	es ...common.Event[AID, EID],
 ) error {
 	for _, e := range es {
 		f.m.Compute(e.AggID(), computeEvent(e))
@@ -44,10 +45,10 @@ func (f fake[EID, AID]) Append(
 }
 
 // Fetch implements domain.EventRepo.
-func (f fake[EID, AID]) Fetch(
+func (f fake[AID, EID]) Fetch(
 	_ context.Context,
 	k AID,
-) ([]domain.Event[EID, AID], error) {
+) ([]common.Event[AID, EID], error) {
 	if events, ok := f.m.Load(k); ok {
 		return events, nil
 	}
@@ -56,11 +57,11 @@ func (f fake[EID, AID]) Fetch(
 }
 
 func computeEvent[EID, AID comparable](
-	e domain.Event[EID, AID],
-) func([]domain.Event[EID, AID], bool) ([]domain.Event[EID, AID], xsync.ComputeOp) {
+	e common.Event[AID, EID],
+) func([]common.Event[AID, EID], bool) ([]common.Event[AID, EID], xsync.ComputeOp) {
 	return func(
-		ov []domain.Event[EID, AID], _ bool) (
-		_ []domain.Event[EID, AID], op xsync.ComputeOp,
+		ov []common.Event[AID, EID], _ bool) (
+		_ []common.Event[AID, EID], op xsync.ComputeOp,
 	) {
 		return append(ov, e), xsync.UpdateOp
 	}

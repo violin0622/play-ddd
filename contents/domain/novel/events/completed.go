@@ -1,12 +1,15 @@
 package events
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/oklog/ulid/v2"
 )
 
 var _ Event = (*Completed)(nil)
+
+// _ restorable = (*Completed)(nil)
 
 type Completed struct {
 	id  ID
@@ -28,3 +31,5 @@ func (t Completed) EmittedAt() time.Time { return t.at }
 func (t Completed) ID() ID               { return t.id }
 func (t Completed) Kind() string         { return `Completed` }
 func (t Completed) String() string       { return formatEvent(t) }
+
+func (t Completed) Payload() ([]byte, error) { return json.Marshal(map[string]any{}) }

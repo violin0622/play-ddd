@@ -30,7 +30,7 @@ func (s *cmdServiceServer) CreateNovel(
 ) (rep *contv1.CreateNovelResponse, err error,
 ) {
 	cmd := command.CreateNovel{
-		AuthorID: req.GetAuthorId().AsULID(),
+		AuthorID: req.GetAuthorId().Into(),
 		Title:    req.GetTitle(),
 		Desc:     req.GetDesc(),
 		Category: req.GetCategory(),
@@ -42,7 +42,7 @@ func (s *cmdServiceServer) CreateNovel(
 		return nil, err
 	}
 
-	return &contv1.CreateNovelResponse{Id: ulidpb.FromULID(id)}, nil
+	return &contv1.CreateNovelResponse{Id: ulidpb.From(id)}, nil
 }
 
 func (s *cmdServiceServer) UpdateNovel(
@@ -66,7 +66,7 @@ func (s *cmdServiceServer) UploadChapter(
 	rep *contv1.UploadChapterResponse, err error,
 ) {
 	id, err := s.ah.UploadChapter(ctx, command.UploadChapter{
-		NovelID:      req.GetNovelId().AsULID(),
+		NovelID:      req.GetNovelId().Into(),
 		Title:        req.GetTitle(),
 		MainContent:  req.GetMainContent(),
 		ExtraContent: req.GetExtraContent(),
@@ -75,5 +75,5 @@ func (s *cmdServiceServer) UploadChapter(
 		return nil, err
 	}
 
-	return &contv1.UploadChapterResponse{Id: ulidpb.FromULID(id)}, nil
+	return &contv1.UploadChapterResponse{Id: ulidpb.From(id)}, nil
 }

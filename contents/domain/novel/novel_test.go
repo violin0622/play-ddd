@@ -13,7 +13,6 @@ import (
 	"play-ddd/contents/domain/novel"
 	"play-ddd/contents/domain/novel/events"
 	"play-ddd/contents/domain/novel/vo"
-	"play-ddd/contents/infra/eventstore/fake"
 )
 
 var _ novel.EventRepo = (*nopEventRepo)(nil)
@@ -30,7 +29,7 @@ var _ = Describe(`NovelReplayEvents`, func() {
 		n            novel.Novel
 		err          error
 		id, autherID = ulid.Make(), ulid.Make()
-		fac          = novel.NewFactory(nopEventRepo{}, logr.Discard(), nil)
+		fac          = novel.NewFactory(logr.Discard())
 	)
 
 	// events
@@ -149,6 +148,6 @@ var _ = Describe(`NovelReplayEvents`, func() {
 	})
 })
 
-var _ = Describe(``, func() {
-	var _ novel.EventRepo = fake.New[novel.ID, novel.ID]()
-})
+// var _ = Describe(``, func() {
+// 	var _ novel.EventRepo = fake.New[novel.ID, novel.ID]()
+// })

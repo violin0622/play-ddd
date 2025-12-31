@@ -1,6 +1,7 @@
 package events
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -32,5 +33,7 @@ func (t ChapterWithdrawed) AggID() ID            { return t.aid }
 func (t ChapterWithdrawed) AggKind() string      { return `Novel` }
 func (t ChapterWithdrawed) EmittedAt() time.Time { return t.at }
 func (t ChapterWithdrawed) ID() ID               { return t.id }
-func (t ChapterWithdrawed) Kind() string         { return `ChapterWithdrawed` }
-func (t ChapterWithdrawed) String() string       { return formatEvent(t) }
+
+func (t ChapterWithdrawed) Kind() string             { return `ChapterWithdrawed` }
+func (t ChapterWithdrawed) String() string           { return formatEvent(t) }
+func (t ChapterWithdrawed) Payload() ([]byte, error) { return json.Marshal(t) }

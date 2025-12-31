@@ -1,6 +1,7 @@
 package bps
 
 import (
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -12,6 +13,12 @@ import (
 type bps struct {
 	rl  rate.Limiter
 	api string
+
+	total, denied atomic.Uint64
+}
+
+func New(api string) bps {
+	return bps{api: api}
 }
 
 func (l *bps) Set(r rate.Limit, b int) {
@@ -20,9 +27,13 @@ func (l *bps) Set(r rate.Limit, b int) {
 }
 
 func (l *bps) Request(ri requestlimter.RequestInfo) (r requestlimter.Result) {
+	l.total.Add(1)
+
 	if l.rl.AllowN(time.Now(), int(ri.PS.InBytes)) {
 		return r
 	}
+
+	l.denied.Add(1)
 
 	r.Deny = true
 	r.Details = append(r.Details, &epb.QuotaFailure{

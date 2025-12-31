@@ -22,9 +22,10 @@ func NewNolongerUpdate(aid ID) NolongerUpdate {
 	}
 }
 
-func (t NolongerUpdate) AggID() ID            { return t.aid }
-func (t NolongerUpdate) AggKind() string      { return `Novel` }
-func (t NolongerUpdate) EmittedAt() time.Time { return t.at }
-func (t NolongerUpdate) ID() ID               { return t.id }
-func (t NolongerUpdate) Kind() string         { return `NolongerUpdate` }
-func (t NolongerUpdate) String() string       { return formatEvent(t) }
+func (t NolongerUpdate) AggID() ID                { return t.aid }
+func (t NolongerUpdate) AggKind() string          { return `Novel` }
+func (t NolongerUpdate) EmittedAt() time.Time     { return t.at }
+func (t NolongerUpdate) ID() ID                   { return t.id }
+func (t NolongerUpdate) Kind() string             { return `NolongerUpdate` }
+func (t NolongerUpdate) String() string           { return formatEvent(t) }
+func (t NolongerUpdate) Payload() ([]byte, error) { return emptyPayload() }

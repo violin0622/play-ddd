@@ -22,9 +22,10 @@ func NewNovelPublished(aid ID) NovelPublished {
 	}
 }
 
-func (t NovelPublished) AggID() ID            { return t.aid }
-func (t NovelPublished) AggKind() string      { return `Novel` }
-func (t NovelPublished) EmittedAt() time.Time { return t.at }
-func (t NovelPublished) ID() ID               { return t.id }
-func (t NovelPublished) Kind() string         { return `NovelPublished` }
-func (t NovelPublished) String() string       { return formatEvent(t) }
+func (t NovelPublished) AggID() ID                { return t.aid }
+func (t NovelPublished) AggKind() string          { return `Novel` }
+func (t NovelPublished) EmittedAt() time.Time     { return t.at }
+func (t NovelPublished) ID() ID                   { return t.id }
+func (t NovelPublished) Kind() string             { return `NovelPublished` }
+func (t NovelPublished) String() string           { return formatEvent(t) }
+func (t NovelPublished) Payload() ([]byte, error) { return emptyPayload() }

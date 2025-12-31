@@ -3,7 +3,6 @@ package requestlimter
 import (
 	"context"
 
-	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -16,7 +15,16 @@ import (
 
 type RequestLimiter interface {
 	Request(RequestInfo) Result
-	Set(rate.Limit, int)
+}
+
+type RequestLimiterStats interface {
+	Stats() Stats
+}
+
+type Stats struct {
+	Total, Denied uint64
+	Limit, Tokens float64
+	Burst         int
 }
 
 type RequestInfo struct {

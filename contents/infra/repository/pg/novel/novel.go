@@ -2,16 +2,15 @@ package novel
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"play-ddd/contents/app"
-	"play-ddd/contents/domain"
 	"play-ddd/contents/domain/novel"
 	"play-ddd/contents/domain/novel/vo"
+	dt "play-ddd/contents/infra/repository/pg/datatypes"
 	"play-ddd/contents/infra/repository/pg/datatypes/ts"
 	dtulid "play-ddd/contents/infra/repository/pg/datatypes/ulid"
 )
@@ -25,65 +24,54 @@ type novelRepo struct {
 	fact novel.Factory
 }
 
-// Append implements app.NovelRepo.
-func (p novelRepo) Append(
-	ctx context.Context,
-	es ...domain.Event[novel.ID, novel.ID],
-) error {
-	return p.db.Save(es).Error
-}
-
 // Get implements app.NovelRepo.
 func (p novelRepo) Get(
 	ctx context.Context,
 	id novel.ID,
 ) (novel novel.Novel, err error) {
 	var n Novel
-	if err = p.db.Take(&n, dtulid.ULID(id)).Error; err != nil {
+	err = p.db.
+		WithContext(ctx).
+		Where(nonDeleted).
+		Take(&n, dtulid.ULID(id)).
+		Error
+	if err != nil {
 		return novel, err
 	}
 
-	fmt.Printf("get novel: %+v\n", n)
-	fmt.Printf("%+v\n", intoSlice[Chapter, vo.Chapter](n.TOC))
-	fmt.Println(n.TOC[0].intoDomain())
-
-	return p.fact.Restore(
-		n.ID.Into(),
-		n.AuthorID.Into(),
-		n.Title,
-		n.Category,
-		n.Description,
-		n.Tags,
-		n.Status,
-		url.URL{},
-		intoSlice[Chapter, vo.Chapter](n.TOC),
-		n.WordCount,
-		n.UpdatedAt.Into(),
-		n.CreatedAt.Into(),
-	)
+	return p.restore(n)
 }
 
 // Save implements app.NovelRepo.
 func (nr novelRepo) Save(ctx context.Context, n novel.Novel) error {
 	novel := fromDomain[novel.Novel, Novel](n)
-	return nr.db.WithContext(ctx).Debug().Create(&novel).Error
+	return nr.db.
+		WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: `id`}},
+			UpdateAll: true,
+			Where: clause.Where{
+				Exprs: []clause.Expression{
+					gorm.Expr(`"novels"."updated_ts"<="excluded"."updated_ts"`),
+					nonDeleted,
+				},
+			},
+		}).
+		Create(&novel).
+		Error
 }
 
-func New(db *gorm.DB) novelRepo { return novelRepo{db: db} }
+var nonDeleted = gorm.Expr(`"novels"."deleted_ts" = 0 `)
 
-func Init(db *gorm.DB) error {
-	if err := db.AutoMigrate(Novel{}); err != nil {
-		return fmt.Errorf(`init repo: automigrate: %w`, err)
-	}
-
-	return nil
+func New(
+	db *gorm.DB,
+	fact novel.Factory,
+) novelRepo {
+	return novelRepo{db: db, fact: fact}
 }
 
 type Novel struct {
-	ID          ID `gorm:"primaryKey"`
-	CreatedAt   ts.Timestamp
-	UpdatedAt   ts.Timestamp
-	DeletedAt   ts.Timestamp
+	dt.Model[ID]
 	AuthorID    ID
 	Title       string
 	Category    string
@@ -101,8 +89,8 @@ func (n *Novel) fromDomain(novel novel.Novel) {
 	}
 
 	n.ID = dtulid.ULID(novel.ID())
-	n.CreatedAt = ts.From(novel.CreatedAt())
-	n.UpdatedAt = ts.From(novel.UpdatedAt())
+	n.CreatedTs = ts.From(novel.CreatedAt())
+	n.UpdatedTs = ts.From(novel.UpdatedAt())
 	n.AuthorID = dtulid.ULID(novel.AuthorID())
 	n.Title = string(novel.Title())
 	n.Description = string(novel.Description())
@@ -133,9 +121,9 @@ func (c *Chapter) fromDomain(vc vo.Chapter) {
 	c.UploadedAt = vc.UploadedAt.UnixMilli()
 }
 
-func (c *Chapter) intoDomain() (vc vo.Chapter) {
+func (c *Chapter) IntoDomain() (vc vo.Chapter, err error) {
 	if c == nil {
-		return vc
+		return vc, nil
 	}
 
 	vc.Title = c.Title
@@ -143,7 +131,7 @@ func (c *Chapter) intoDomain() (vc vo.Chapter) {
 	vc.WordCount = c.WordCount
 	vc.UpdatedAt = time.UnixMilli(c.UpdatedAt)
 	vc.UploadedAt = time.UnixMilli(c.UploadedAt)
-	return vc
+	return vc, nil
 }
 
 func fromDomain[A, M any, P fromPtr[A, M]](a A) (b M) {
@@ -159,30 +147,11 @@ type fromPtr[A any, M any] interface {
 
 func fromSlice[A, M any, Mp fromPtr[A, M]](as []A) (bs []M) {
 	if len(as) == 0 {
-		return nil
+		return make([]M, 0)
 	}
 	bs = make([]M, len(as))
 	for i := range as {
 		Mp(&bs[i]).fromDomain(as[i])
 	}
 	return bs
-}
-
-// intoPtr constraints *M can convert to A
-// 'A' stands for Aggregate in domain, and 'M' stands for Model mapping to repo.
-type intoPtr[M any, A any] interface {
-	intoDomain() A
-	*M
-}
-
-func intoSlice[M, A any, P intoPtr[M, A]](ms []M) (as []A) {
-	if len(ms) == 0 {
-		return nil
-	}
-
-	as = make([]A, len(ms))
-	for i := range as {
-		as[i] = P(&ms[i]).intoDomain()
-	}
-	return as
 }

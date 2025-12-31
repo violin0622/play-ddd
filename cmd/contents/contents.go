@@ -1,9 +1,7 @@
-package cmd
+package contents
 
 import (
 	"github.com/spf13/cobra"
-
-	"play-ddd/cmd/contents"
 )
 
 func Contents() *cobra.Command {
@@ -13,8 +11,8 @@ func Contents() *cobra.Command {
 		Short:   `contents service actions`,
 	}
 
-	cmd.AddCommand(contents.Run())
-	cmd.AddCommand(contents.Config())
+	cmd.AddCommand(Run())
+	cmd.AddCommand(Config())
 
 	return cmd
 }

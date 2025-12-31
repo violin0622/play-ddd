@@ -14,7 +14,6 @@ import (
 
 	"play-ddd/contents/infra/server/log"
 	"play-ddd/contents/infra/server/requestlimiter"
-	"play-ddd/contents/infra/server/requestlimiter/nop"
 	"play-ddd/contents/infra/server/stats"
 	contentsv1 "play-ddd/proto/gen/go/contents/v1"
 )
@@ -26,7 +25,6 @@ func New(
 ) *grpc.Server {
 	var b builder
 	b.logr = logr.Discard()
-	b.rl = nop.New()
 	for _, o := range opts {
 		o(&b)
 	}

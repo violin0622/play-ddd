@@ -1,0 +1,34 @@
+syntax = "proto3";
+package contents.novel.v1;
+
+import "contents/novel/v1/novel.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "ulid/ulid.proto";
+
+option go_package = "contents/novel/v1";
+
+message Event {
+  ulid.ULID id = 1;
+  ulid.ULID aggregate_id = 2;
+  google.protobuf.Timestamp emit_at = 3;
+  string kind = 4;
+  string aggregate_kind = 5;
+  google.protobuf.Any payload = 6;
+  // oneof payload {
+  //   NovelCreated novel_created = 10;
+  //   NewChapterUploaded new_chapter_uploaded = 11;
+  // }
+}
+
+message NovelCreated {
+  ulid.ULID author_id = 1;
+  string title = 2;
+  string description = 3;
+  repeated string tags = 4;
+  string category = 5;
+}
+
+message NewChapterUploaded {
+  Novel.Chapter payload = 1;
+}

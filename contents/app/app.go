@@ -14,6 +14,13 @@ type CommandHandler struct {
 	cf        chapter.Factory
 	repo      Repo
 	log       logr.Logger
+
+	stats Stats
+}
+
+type Stats struct {
+	reqRetryTimes map[string]uint64
+	reqRetries    map[string]uint64
 }
 
 func NewCommandHandler(
@@ -31,24 +38,26 @@ func NewQueryHandler() QueryHandler {
 }
 
 type QueryHandler struct {
-	repo Repo
-	log  logr.Logger
+	// repo Repo
+	// log logr.Logger
 }
 
 type Repo interface {
 	Chapter() ChapterRepo
 	Novel() NovelRepo
+	Event() novel.EventRepo
 	Tx(func(Repo) error) error
 }
 
 type ChapterRepo interface {
-	chapter.EventRepo
+	// chapter.EventRepo
 	Get(context.Context, chapter.ID) (chapter.Chapter, error)
 	Save(context.Context, chapter.Chapter) error
 }
 
 type NovelRepo interface {
-	novel.EventRepo
+	novel.Query
+
 	Get(context.Context, novel.ID) (novel.Novel, error)
 	Save(context.Context, novel.Novel) error
 }

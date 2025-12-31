@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cenkalti/backoff/v5"
+
 	"play-ddd/contents/app/command"
 	"play-ddd/contents/domain/chapter"
 	"play-ddd/contents/domain/novel"
@@ -11,25 +13,57 @@ import (
 
 func (s *CommandHandler) CreateNovel(
 	ctx context.Context, cmd command.CreateNovel) (
-	novel.ID, error,
+	id novel.ID, err error,
 ) {
-	r := s.novelFact.Create(
+	retry := -1
+	id, err = backoff.Retry(
 		ctx,
-		cmd.AuthorID,
-		cmd.Title,
-		cmd.Desc,
-		cmd.Category,
-		cmd.Tags)
+		func() (novel.ID, error) {
+			retry += 1
+			return s.createNovel(ctx, cmd)
+		},
+		backoff.WithMaxTries(3))
 
-	if r.IsError() {
-		return novel.ZeroID, r.Error()
+	if retry > 0 {
+		s.stats.reqRetries[`CreateNovel`] += 1
+		s.stats.reqRetryTimes[`CreateNovel`] += uint64(retry)
 	}
 
-	if err := s.repo.Novel().Save(ctx, r.MustGet()); err != nil {
-		return novel.ZeroID, err
+	if err != nil {
+		return novel.ZeroID, fmt.Errorf(`create novel: %w`, err)
 	}
+	return id, err
+}
 
-	return r.MustGet().ID(), nil
+func (s *CommandHandler) createNovel(
+	ctx context.Context, cmd command.CreateNovel) (
+	id novel.ID, err error,
+) {
+	err = s.repo.Tx(func(tx Repo) error {
+		r := s.novelFact.
+			WithQuery(tx.Novel()).
+			WithEventRepo(tx.Event()).
+			Create(
+				ctx,
+				cmd.AuthorID,
+				cmd.Title,
+				cmd.Desc,
+				cmd.Category,
+				cmd.Tags)
+
+		if r.IsError() {
+			return r.Error()
+		}
+
+		if err = s.repo.Novel().Save(ctx, r.MustGet()); err != nil {
+			return err
+		}
+
+		id = r.MustGet().ID()
+		return nil
+	})
+
+	return id, err
 }
 
 // UploadChapter 先后更新 Chapter 和 Novel 聚合。
@@ -44,7 +78,7 @@ func (s *CommandHandler) UploadChapter(
 		}
 
 		c, err := s.cf.
-			WithEventRepo(tx.Chapter()).
+			WithEventRepo(tx.Event()).
 			UploadChapter(
 				ctx,
 				novel.ChapterCount()+1,

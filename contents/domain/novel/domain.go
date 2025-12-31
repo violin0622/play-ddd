@@ -3,15 +3,16 @@ package novel
 import (
 	"github.com/oklog/ulid/v2"
 
-	"play-ddd/contents/domain"
+	"play-ddd/common"
 )
 
 type (
 	ID        = ulid.ULID
-	Event     = domain.Event[ID, ID]
-	EventRepo = domain.EventRepo[ID, ID]
-	Aggregate = domain.Aggregate[ID]
-	Repo      = domain.AggregateRepo[ID, Novel]
+	AuthorID  = ulid.ULID
+	Event     = common.Event[ID, ID]
+	EventRepo = common.EventRepo[ID, ID]
+	Aggregate = common.Aggregate[ID]
+	Repo      = common.AggregateRepo[ID, Novel]
 )
 
 var ZeroID = ulid.Zero

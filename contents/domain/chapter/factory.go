@@ -13,12 +13,15 @@ type Factory struct {
 	log logr.Logger
 }
 
-func NewFactory(er EventRepo, log logr.Logger) Factory {
-	return Factory{er: er, log: log}
+func NewFactory(log logr.Logger) Factory {
+	return Factory{log: log}
 }
 
 func (f Factory) WithEventRepo(er EventRepo) Factory {
-	return NewFactory(er, f.log)
+	return Factory{
+		log: f.log,
+		er:  er,
+	}
 }
 
 func (cf Factory) UploadChapter(
@@ -44,11 +47,11 @@ func (cf Factory) UploadChapter(
 		id:           ulid.Make(),
 		aid:          c.id,
 		at:           Now(),
-		seq:          seq,
-		title:        c.title,
-		mainContent:  c.mainContent,
-		extraContent: c.extraContent,
-		wordCount:    countWords(c.mainContent),
+		Seq:          seq,
+		Title:        c.title,
+		MainContent:  c.mainContent,
+		ExtraContent: c.extraContent,
+		WordCount:    countWords(c.mainContent),
 	})
 	if err != nil {
 		return Chapter{}, fmt.Errorf(`upload chapter: %w`, err)

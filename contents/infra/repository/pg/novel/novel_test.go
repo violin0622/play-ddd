@@ -58,11 +58,11 @@ var _ = Describe(`NoveRepo`, func() {
 		createdAt = now
 		updatedAt = now
 
-		fact = novel.NewFactory(nil, logr.Discard(), nil)
+		fact = novel.NewFactory(logr.Discard())
 	)
 
 	It(`save novel`, func(ctx SpecContext) {
-		repo := novelrepo.New(db)
+		repo := novelrepo.New(db, novel.NewFactory(logr.Discard()))
 		novel, err := fact.Restore(
 			novelID,
 			authorID,
@@ -83,7 +83,7 @@ var _ = Describe(`NoveRepo`, func() {
 	})
 
 	It(`load novel`, func(ctx SpecContext) {
-		repo := novelrepo.New(db)
+		repo := novelrepo.New(db, novel.Factory{})
 		novel, err := repo.Get(ctx, novelID)
 		Ω(err).ShouldNot(HaveOccurred())
 		Ω(novel.ID()).Should(BeEquivalentTo(novelID))
