@@ -134,7 +134,9 @@ func (r *Relay) processEvents(ctx context.Context) (
 			return nil
 		}
 
-		pbEvents, results := convertEvents(events)
+		results := make([]Result, len(events))
+		pbEvents := make([]*novelv1.Event, len(events))
+		convertEvents(events, pbEvents, results)
 
 		n, err := r.pubEvents(ctx, ef, results, pbEvents)
 		if err != nil {
@@ -147,24 +149,21 @@ func (r *Relay) processEvents(ctx context.Context) (
 	}
 }
 
-func convertEvents(events []Event) (
-	pbEvents []*novelv1.Event, results []Result,
+func convertEvents(
+	events []Event,
+	pbEvents []*novelv1.Event,
+	results []Result,
 ) {
-	results = make([]Result, len(events))
-	pbEvents = make([]*novelv1.Event, 0, len(events))
-
 	for i := range events {
 		pe, err := fromRepo(events[i])
 		if err == nil {
-			pbEvents = append(pbEvents, pe)
+			pbEvents[i] = pe
 		} else {
 			results[i].ID = events[i].ID()
 			results[i].Status = failed
 			results[i].Reason = err.Error()
 		}
 	}
-
-	return pbEvents, results
 }
 
 type status string
@@ -178,26 +177,26 @@ const (
 func (r *Relay) pubEvents(
 	ctx context.Context,
 	ef EventsBatch,
-	results []Result,
-	events []*novelv1.Event) (
+	pbEvents []*novelv1.Event,
+	results []Result) (
 	n int, err error,
 ) {
 	defer xerr.Expect(&err, `publish events`)
 
-	left, right := 0, min(r.maxPub, len(events))
-	for left < len(events) {
+	left, right := 0, min(r.maxPub, len(pbEvents))
+	for left < len(pbEvents) {
 		select {
 		case <-ctx.Done():
 			return left, context.Cause(ctx)
 		default:
 		}
 
-		err := r.eb.Pub(ctx, events[left:right])
+		err := r.eb.Pub(ctx, pbEvents[left:right])
 		xslice.Parallel(
 			results[left:right],
-			events[left:right],
+			pbEvents[left:right],
 			func(i int) {
-				results[left+i].ID = events[left+i].GetId().Into()
+				results[left+i].ID = pbEvents[left+i].GetId().Into()
 				results[left+i].Status = published
 				if err != nil {
 					results[left+i].Status = failed
@@ -209,7 +208,7 @@ func (r *Relay) pubEvents(
 			return left, err
 		}
 
-		left, right = right, min(right+r.maxPub, len(events))
+		left, right = right, min(right+r.maxPub, len(pbEvents))
 	}
 
 	return left, nil
