@@ -43,7 +43,7 @@ func (e *event[A, B]) FromPB(pe *novelv1.Event) (err error) {
 	e.kind = pe.GetKind()
 	e.aggKind = pe.GetAggregateKind()
 	e.payload = new(A)
-	return pe.Payload.UnmarshalTo(e.payload)
+	return pe.GetPayload().UnmarshalTo(e.payload)
 }
 
 func (t event[A, Ap]) AggID() ID            { return t.aid }

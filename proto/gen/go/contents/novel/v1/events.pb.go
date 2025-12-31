@@ -232,7 +232,7 @@ var File_contents_novel_v1_events_proto protoreflect.FileDescriptor
 
 const file_contents_novel_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x1econtents/novel/v1/events.proto\x12\x11contents.novel.v1\x1a\x1dcontents/novel/v1/novel.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\x1a\x0fulid/ulid.proto\"\xf2\x01\n" +
+	"\x1econtents/novel/v1/events.proto\x12\x11contents.novel.v1\x1a\x1dcontents/novel/v1/novel.proto\x1a\x19google/protobuf/any.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fulid/ulid.proto\"\xf2\x01\n" +
 	"\x05Event\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\v2\n" +
 	".ulid.ULIDR\x02id\x12-\n" +

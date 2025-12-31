@@ -25,6 +25,9 @@ type (
 		Kind          string
 		Payload       []byte
 		Version       uint64
+		Status        string
+		Reason        string
+		Seq           uint64
 	}
 )
 
@@ -69,29 +72,29 @@ func (e eventRepo) Append(
 	})
 }
 
-func (e eventRepo) Fetch(
-	ctx context.Context, aid novel.ID) (
-	[]common.Event[novel.ID, novel.ID], error,
-) {
-	var events []Event
-	err := e.db.
-		WithContext(ctx).
-		Where(`"aggregate_id" = ?`, ID(aid)).
-		Find(&events).
-		Error
-	if err != nil {
-		return nil, err
-	}
+// func (e eventRepo) Fetch(
+// 	ctx context.Context, aid novel.ID) (
+// 	[]common.Event[novel.ID, novel.ID], error,
+// ) {
+// 	var events []Event
+// 	err := e.db.
+// 		WithContext(ctx).
+// 		Where(`"aggregate_id" = ?`, ID(aid)).
+// 		Find(&events).
+// 		Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// return convert.SliceIntoDomain[Event, novelevent.Event](events)
+// 	return nil, nil
+// }
 
-	// return convert.SliceIntoDomain[Event, novelevent.Event](events)
-	return nil, nil
-}
-
-func (e eventRepo) Pull(
-	ctx context.Context, seq uint64,
-) ([]common.Event[novel.ID, novel.ID], error) {
-	return nil, nil
-}
+// func (e eventRepo) Pull(
+// 	ctx context.Context, seq uint64,
+// ) ([]common.Event[novel.ID, novel.ID], error) {
+// 	return nil, nil
+// }
 
 func (e *Event) FromDomain(de common.Event[novel.ID, novel.ID]) (err error) {
 	if e == nil {
@@ -106,16 +109,3 @@ func (e *Event) FromDomain(de common.Event[novel.ID, novel.ID]) (err error) {
 	e.Payload, err = de.Payload()
 	return err
 }
-
-// func (e Event) IntoPB() (*novelv1.Event, error) {
-// 	pbe := &novelv1.Event{
-// 		Id:            ulidpb.From(e.ID.Into()),
-// 		AggregateId:   ulidpb.From(e.AggregateID.Into()),
-// 		EmitAt:        timestamppb.New(e.CreatedTs.Into()),
-// 		Kind:          e.Kind,
-// 		AggregateKind: e.AggregateKind,
-// 		Payload:       nil,
-// 	}
-//
-// 	return pbe, nil
-// }

@@ -3,6 +3,7 @@ package outbox
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -15,31 +16,47 @@ import (
 	novelv1 "play-ddd/proto/gen/go/contents/novel/v1"
 	ulidpb "play-ddd/proto/gen/go/ulid"
 	"play-ddd/utils/xerr"
+	"play-ddd/utils/xslice"
 )
 
 type Relay struct {
-	stopped     atomic.Bool
 	eb          EventBus
 	er          EventRepo
-	t           time.Ticker
+	t           *time.Ticker
 	maxPub      int
 	maxFetch    int
 	interval    time.Duration
-	cancelFn    context.CancelCauseFunc
 	log         logr.Logger
 	tickTimeout time.Duration
 	notify      <-chan struct{}
+	wg          sync.WaitGroup
+
+	// These fields are for start/stop control.
+	ctx      context.Context
+	cancelFn context.CancelCauseFunc
+	stopped  atomic.Bool
 }
 
 func NewRelay(
-	interval time.Duration,
+	eb EventBus,
+	er EventRepo,
+	log logr.Logger,
 	notify <-chan struct{},
-) (r Relay) {
-	r.interval = interval
-	r.t = *time.NewTicker(interval)
+	interval time.Duration,
+) *Relay {
+	r := &Relay{
+		eb:          eb,
+		er:          er,
+		t:           time.NewTicker(interval),
+		maxPub:      100,
+		maxFetch:    100,
+		interval:    interval,
+		notify:      notify,
+		log:         log,
+		tickTimeout: 10 * time.Second,
+	}
 	r.stopped.Store(true)
-	r.notify = notify
-	return
+	return r
 }
 
 func (r *Relay) Start() (err error) {
@@ -51,9 +68,8 @@ func (r *Relay) Start() (err error) {
 	defer xerr.Expect(&err, `start relay`)
 
 	r.t.Reset(r.interval)
-	ctx := context.Background()
-	ctx, r.cancelFn = context.WithCancelCause(ctx)
-	go r.run(ctx)
+	r.ctx, r.cancelFn = context.WithCancelCause(context.Background())
+	r.wg.Go(r.run)
 
 	return nil
 }
@@ -66,27 +82,28 @@ func (r *Relay) Stop() (err error) {
 
 	defer xerr.Expect(&err, `stop relay`)
 	r.t.Stop()
-	r.cancelFn(fmt.Errorf(`stopped`))
+	r.cancelFn(fmt.Errorf(`relay stopped`))
+	r.wg.Wait()
 
 	return nil
 }
 
-func (r *Relay) run(ctx context.Context) {
+func (r *Relay) run() {
 	for {
 		select {
 		case <-r.notify:
-			if err := r.tick(ctx); err != nil {
+			if err := r.tick(r.ctx); err != nil {
 				r.log.Error(err, `Relay tick failed.`)
 			}
 			r.log.V(1).Info(`Relay ticked.`)
 		case <-r.t.C:
-			if err := r.tick(ctx); err != nil {
+			if err := r.tick(r.ctx); err != nil {
 				r.log.Error(err, `Relay tick failed.`)
 			}
 			r.log.V(1).Info(`Relay ticked.`)
-		case <-ctx.Done():
+		case <-r.ctx.Done():
 			r.log.Info(`Relay tick stopped.`,
-				`cause`, context.Cause(ctx))
+				`cause`, context.Cause(r.ctx))
 			return
 		}
 	}
@@ -154,8 +171,8 @@ type status string
 
 const (
 	pending   status = `pending`
-	failed           = `failed`
-	published        = `published`
+	failed    status = `failed`
+	published status = `published`
 )
 
 func (r *Relay) pubEvents(
@@ -176,19 +193,21 @@ func (r *Relay) pubEvents(
 		}
 
 		err := r.eb.Pub(ctx, events[left:right])
-		if err != nil {
-			for i := range events[left:right] {
-				results[left+i].ID = events[left+i].GetId().Into()
-				results[left+i].Status = failed
-				results[left+i].Reason = err.Error()
-			}
-		} else {
-			for i := range events[left:right] {
+		xslice.Parallel(
+			results[left:right],
+			events[left:right],
+			func(i int) {
 				results[left+i].ID = events[left+i].GetId().Into()
 				results[left+i].Status = published
-			}
+				if err != nil {
+					results[left+i].Status = failed
+					results[left+i].Reason = err.Error()
+				}
+			})
+
+		if err = ef.AdvanceCursor(results[left:right]...); err != nil {
+			return left, err
 		}
-		ef.AdvanceCursor(results[left:right]...)
 
 		left, right = right, min(right+r.maxPub, len(events))
 	}
@@ -213,8 +232,8 @@ func fromRepo(e Event) (pe *novelv1.Event, err error) {
 	defer xerr.Expect(&err, `from repo`)
 
 	pe = &novelv1.Event{Payload: &anypb.Any{}}
-	if err = protojson.Unmarshal(e.Payload(), pe.Payload); err != nil {
-		return
+	if err = protojson.Unmarshal(e.Payload(), pe.GetPayload()); err != nil {
+		return pe, err
 	}
 
 	pe.Id = ulidpb.From(e.ID())
@@ -223,5 +242,5 @@ func fromRepo(e Event) (pe *novelv1.Event, err error) {
 	pe.Kind = e.Kind()
 	pe.AggregateKind = e.AggregateKind()
 
-	return
+	return pe, err
 }

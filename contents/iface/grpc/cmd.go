@@ -26,8 +26,8 @@ type cmdServiceServer struct {
 }
 
 func (s *cmdServiceServer) CreateNovel(
-	ctx context.Context, req *contv1.CreateNovelRequest,
-) (rep *contv1.CreateNovelResponse, err error,
+	ctx context.Context, req *contv1.CreateNovelRequest) (
+	rep *contv1.CreateNovelResponse, err error,
 ) {
 	cmd := command.CreateNovel{
 		AuthorID: req.GetAuthorId().Into(),

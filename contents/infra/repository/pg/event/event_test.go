@@ -32,54 +32,6 @@ var _ = BeforeSuite(func() {
 	Ω(err).ShouldNot(HaveOccurred())
 })
 
-// var _ = Describe(`EventRepo`, func() {
-// 	var (
-// 		novelID   = ulid.Make()
-// 		chapterID = ulid.Make()
-// 		desc      = vo.Description(`A New Description.`)
-// 		e1        = ne.NewDescUpdated(novelID, desc)
-// 		e2        = ne.NewCompleted(novelID)
-// 		e3        = chapter.NewChapterRevised(chapterID, vo.Chapter{})
-// 	)
-//
-// 	BeforeEach(func() {
-// 		Ω(
-// 			db.Unscoped().Where(`1=1`).Delete(&eventrepo.Event{}).Error,
-// 		).Should(Succeed())
-//
-// 		repo := eventrepo.New(db)
-// 		Ω(repo.Append(context.TODO(), e1, e2, e3)).Should(Succeed())
-// 	})
-//
-// 	It(`fetch events`, func(ctx SpecContext) {
-// 		repo := eventrepo.New(db)
-// 		es, err := repo.Fetch(ctx, novelID)
-// 		Ω(err).ShouldNot(HaveOccurred())
-// 		Ω(es).Should(HaveLen(2))
-//
-// 		// 验证第一个事件
-// 		ev1 := es[0].(ne.DescUpdated)
-// 		Ω(ev1.ID()).Should(BeEquivalentTo(e1.ID()))
-// 		Ω(ev1.AggID()).Should(BeEquivalentTo(novelID))
-// 		Ω(ev1.Kind()).Should(Equal(`DescUpdated`))
-// 		Ω(ev1.AggKind()).Should(Equal(`Novel`))
-// 		Ω(ev1.Desc).Should(BeEquivalentTo(desc))
-// 		Ω(
-// 			ev1.EmittedAt(),
-// 		).Should(BeTemporally("~", e1.EmittedAt(), time.Second))
-//
-// 		// 验证第二个事件
-// 		ev2 := es[1].(ne.Completed)
-// 		Ω(ev2.ID()).Should(BeEquivalentTo(e2.ID()))
-// 		Ω(ev2.AggID()).Should(BeEquivalentTo(novelID))
-// 		Ω(ev2.Kind()).Should(Equal(`Completed`))
-// 		Ω(ev2.AggKind()).Should(Equal(`Novel`))
-// 		Ω(
-// 			ev2.EmittedAt(),
-// 		).Should(BeTemporally("~", e2.EmittedAt(), time.Second))
-// 	})
-// })
-
 var _ = Describe(`FromDomain`, func() {
 	var (
 		id, authID   = ulid.Make(), ulid.Make()
