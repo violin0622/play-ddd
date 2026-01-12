@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+
+	novelv1 "play-ddd/proto/gen/go/contents/novel/v1"
 )
 
-// EventRepo is interface between outbox processor and event out persisitent
-// storage.
-// (e.g. Postgres or MySQL)
+// EventRepo is interface between outbox processor and event persistent storage.
+// (e.g. Postgres, MySQL or WAL)
 // It is assumed that events are arranged in an orderly manner by time overall,
 // and individual aggregation events are strictly sorted in the order they
 // occur.
@@ -25,23 +26,50 @@ type EventRepo interface {
 // The amount of Events and Result in each call are not guaranteed to be the
 // same, but the order must be the same.
 type EventsBatch interface {
-	// Poll events limited by arg, in order. Events don't have to be in same
-	// aggregation.
+	// PollEvents polls events limited by arg, in order. Events don't have to
+	// be in same aggregation.
 	PollEvents(Arg) ([]Event, error)
 
-	//AdvanceCursor pass results, expected them to be persisitent.
+	// AdvanceCursor pass results, expected them to be persistent.
 	AdvanceCursor(...Result) error
 }
 
-type Arg struct {
-	Max int
+// EventBus is the message bus interface for publishing events.
+type EventBus interface {
+	Pub(context.Context, []*novelv1.Event) error
 }
 
+// Arg contains arguments for polling events.
+type Arg struct {
+	Instance ID
+	Max      int
+}
+
+// Result contains the result of processing an event.
 type Result struct {
 	ID     ID
-	Status status
+	Status Status
 	Reason string
 }
+
+type Evnt struct {
+	ID            ID
+	AggregateID   ID
+	Kind          string
+	AggregateKind string
+	EmitAt        time.Time
+	Payload       []byte
+}
+
+// Status represents the publishing status of an event.
+type Status string
+
+const (
+	StatusPending   Status = "pending"
+	StatusPublished Status = "published"
+	StatusFailed    Status = "failed"
+	StatusDead      Status = "dead" // exceeded max retries
+)
 
 type (
 	ID    = ulid.ULID
@@ -54,3 +82,7 @@ type (
 		Payload() []byte
 	}
 )
+
+type ConvertFailed interface {
+	Onfailed()
+}

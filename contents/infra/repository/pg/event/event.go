@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"play-ddd/common"
@@ -12,6 +15,8 @@ import (
 	dt "play-ddd/contents/infra/repository/pg/datatypes"
 	"play-ddd/contents/infra/repository/pg/datatypes/ts"
 	dtulid "play-ddd/contents/infra/repository/pg/datatypes/ulid"
+	novelv1 "play-ddd/proto/gen/go/contents/novel/v1"
+	ulidpb "play-ddd/proto/gen/go/ulid"
 )
 
 var _ domain.EventRepo[novel.ID, novel.ID] = eventRepo{}
@@ -108,4 +113,19 @@ func (e *Event) FromDomain(de common.Event[novel.ID, novel.ID]) (err error) {
 	e.CreatedTs = ts.From(de.EmittedAt())
 	e.Payload, err = de.Payload()
 	return err
+}
+
+func (e *Event) IntoPB() (pe *novelv1.Event, err error) {
+	pe = &novelv1.Event{Payload: &anypb.Any{}}
+	if err = protojson.Unmarshal(e.Payload, pe.GetPayload()); err != nil {
+		return pe, err
+	}
+
+	pe.Id = ulidpb.From(e.ID.Into())
+	pe.AggregateId = ulidpb.From(e.AggregateID.Into())
+	pe.EmitAt = timestamppb.New(e.CreatedTs.Into())
+	pe.Kind = e.Kind
+	pe.AggregateKind = e.AggregateKind
+
+	return pe, err
 }

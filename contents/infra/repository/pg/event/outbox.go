@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func (e eventRepo) Process(
 	ctx context.Context,
 	fn func(outbox.EventsBatch) error,
 ) (err error) {
-	defer xerr.Expect(&err, `process`)
+	defer xerr.Expect(&err, "process")
 
 	tx := e.db.WithContext(ctx).Begin()
 	defer e.tryCommit(&err, tx)
@@ -55,7 +56,7 @@ func (e eventRepo) Process(
 	var cursor EventCursor
 	err = tx.
 		Model(EventCursor{}).
-		Clauses(clause.Locking{Strength: `UPDATE`}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Take(&cursor).
 		Error
 	if err != nil {
@@ -87,8 +88,6 @@ func (e eventRepo) tryCommit(err *error, tx *gorm.DB) {
 	if *err != nil {
 		tx.Rollback()
 	}
-
-	return
 }
 
 var _ outbox.EventsBatch = (*eventBatch)(nil)
@@ -142,7 +141,9 @@ func (e *eventBatch) PollEvents(arg outbox.Arg) (es []outbox.Event, err error) {
 		return
 	}
 
-	return xslice.MapFn(events, func(e Event) outbox.Event { return repo2Outbox(e) }), nil
+	return slices.Collect(xslice.Map(
+		slices.Values(events),
+		func(e Event) outbox.Event { return repo2Outbox(e) })), nil
 }
 
 func fromOutbox(o outbox.Result) (e Event) {
