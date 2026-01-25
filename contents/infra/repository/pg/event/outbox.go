@@ -13,8 +13,10 @@ import (
 	"play-ddd/utils/xslice"
 )
 
-var _ outbox.EventRepo = eventRepo{}
-var _ outbox.Event = outboxEvent{}
+var (
+	_ outbox.EventRepo = eventRepo{}
+	_ outbox.Event     = outboxEvent{}
+)
 
 type outboxEvent struct {
 	id            outbox.ID
@@ -77,7 +79,7 @@ func (e eventRepo) Process(
 		return err
 	}
 
-	return
+	return err
 }
 
 func (e eventRepo) tryCommit(err *error, tx *gorm.DB) {
@@ -116,13 +118,12 @@ func (e *eventBatch) AdvanceCursor(results ...outbox.Result) (err error) {
 				"reason": ev.Reason,
 			}).
 			Error
-
 		if err != nil {
-			return
+			return err
 		}
 	}
 
-	return
+	return err
 }
 
 // PollEvents implements outbox.EventsBatch.
@@ -138,7 +139,7 @@ func (e *eventBatch) PollEvents(arg outbox.Arg) (es []outbox.Event, err error) {
 		Find(&events).
 		Error
 	if err != nil {
-		return
+		return es, err
 	}
 
 	return slices.Collect(xslice.Map(
@@ -150,5 +151,5 @@ func fromOutbox(o outbox.Result) (e Event) {
 	e.ID = ID(o.ID)
 	e.Status = string(o.Status)
 	e.Reason = o.Reason
-	return
+	return e
 }

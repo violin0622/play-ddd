@@ -13,7 +13,7 @@ func ExampleForeach() {
 		slices.Values([]string{`a`, `b`, `c`}),
 		func(s string) { fmt.Print(s) })
 
-	//Output: abc
+	// Output: abc
 }
 
 func TestForeach(t *testing.T) {

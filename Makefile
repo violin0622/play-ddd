@@ -49,8 +49,11 @@ clean:
 	@rm -f bin/app
 	@go clean -testcache
 
+$(CURDIR)/bin:
+	@mkdir -p $(CURDIR)/bin
+
 .PHONY: golangci-lint
-golangci-lint:
+golangci-lint: $(CURDIR)/bin
 	@CMD="curl -sSfL \
 		https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
 		| sh -s -- -b $(CURDIR)/bin $(GOLANGCI_LINT_VERSION)"; \
@@ -71,7 +74,7 @@ golangci-lint:
 	fi 
 
 .PHONY: buf
-buf:
+buf: $(CURDIR)/bin
 	@BUF_URL="https://github.com/bufbuild/buf/releases/download/v$(BUF_VERSION)/buf-$(OS)-$(ARCH)"; \
 	BUF_BIN="$(CURDIR)/bin/buf"; \
 	if [ ! -f $$BUF_BIN ]; then \
@@ -93,7 +96,7 @@ buf:
 	fi
 
 .PHONY: migrate
-migrate:
+migrate: $(CURDIR)/bin
 	@MIGRATE_URL="https://github.com/golang-migrate/migrate/releases/download/$(MIGRATE_VERSION)/migrate.$(OS)-$(ARCH).tar.gz"; \
 	MIGRATE_BIN="$(CURDIR)/bin/migrate"; \
 	if [ ! -f $$MIGRATE_BIN ]; then \

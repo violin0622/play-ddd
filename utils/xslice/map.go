@@ -46,7 +46,7 @@ func Collect[S iter.Seq2[int, E], E any](s S) []E {
 	return arr
 }
 
-func MapIdxFn[SliceA ~[]A, SliceB []B, A any, B any](
+func MapIdxFn[SliceA ~[]A, SliceB []B, A, B any](
 	sa SliceA,
 	fn func(int, A) B,
 ) SliceB {
@@ -57,7 +57,7 @@ func MapIdxFn[SliceA ~[]A, SliceB []B, A any, B any](
 	return sb
 }
 
-func Parallel[A any, B any, SliceA ~[]A, SliceB ~[]B](
+func Parallel[A, B any, SliceA ~[]A, SliceB ~[]B](
 	sa SliceA, sb SliceB, fn func(int),
 ) {
 	for i := range min(len(sa), len(sb)) {

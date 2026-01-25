@@ -9,13 +9,13 @@ import (
 )
 
 func ExampleMap() {
-	var a = []int{1, 2, 3}
+	a := []int{1, 2, 3}
 
-	var b = xslice.Map(
+	b := xslice.Map(
 		slices.Values(a),
 		func(a int) int { return a * 3 })
 
-	var c = xslice.Map(
+	c := xslice.Map(
 		slices.Values(a),
 		func(a int) string { return strconv.Itoa(a) })
 
@@ -28,9 +28,9 @@ func ExampleMap() {
 }
 
 func ExampleMapIdx() {
-	var a = []int{1, 2, 3}
+	a := []int{1, 2, 3}
 
-	var b = xslice.MapIdx(
+	b := xslice.MapIdx(
 		slices.All(a),
 		func(i, a int) (int, int) { return i, a * 3 })
 
@@ -38,8 +38,8 @@ func ExampleMapIdx() {
 		fmt.Println(i, n)
 	}
 
-	//Output:
-	//0 3
-	//1 6
-	//2 9
+	// Output:
+	// 0 3
+	// 1 6
+	// 2 9
 }
