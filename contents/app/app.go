@@ -30,6 +30,10 @@ func NewCommandHandler(
 	return CommandHandler{
 		repo: repo,
 		log:  log,
+		stats: Stats{
+			reqRetryTimes: map[string]uint64{},
+			reqRetries:    map[string]uint64{},
+		},
 	}
 }
 

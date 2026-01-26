@@ -46,8 +46,8 @@ type Relay struct {
 	wg       sync.WaitGroup
 
 	// Health check
-	lastTickAt  atomic.Value // time.Time
-	lastTickErr atomic.Value // error
+	lastTickAt atomic.Value // time.Time
+	// lastTickErr atomic.Value // error
 }
 
 // NewRelay creates a new Relay with the given dependencies and options.
@@ -55,7 +55,7 @@ func NewRelay(
 	bus EventBus,
 	repo EventRepo,
 	log logr.Logger,
-	notify <-chan struct{},
+	// notify <-chan struct{},
 	opts ...Option,
 ) *Relay {
 	r := &Relay{
@@ -65,7 +65,7 @@ func NewRelay(
 		maxPub:      100,
 		interval:    time.Second,
 		tickTimeout: 10 * time.Second,
-		notify:      notify,
+		notify:      make(<-chan struct{}),
 		log:         log,
 		instance:    ulid.Make(),
 	}
@@ -145,12 +145,12 @@ func (r *Relay) Ready() bool {
 }
 
 // LastError returns the last tick error, if any.
-func (r *Relay) LastError() error {
-	if err, ok := r.lastTickErr.Load().(error); ok {
-		return err
-	}
-	return nil
-}
+// func (r *Relay) LastError() error {
+// 	if err, ok := r.lastTickErr.Load().(error); ok {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 // run is the main loop that listens for triggers and processes events.
 func (r *Relay) run() {
@@ -183,7 +183,6 @@ func (r *Relay) tick() {
 	defer cancel()
 
 	err := r.repo.Process(r.processEvents(ctx))
-	r.lastTickErr.Store(err)
 
 	if err != nil {
 		r.log.Error(err, "Relay tick failed.")

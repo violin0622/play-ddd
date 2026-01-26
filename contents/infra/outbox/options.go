@@ -40,3 +40,9 @@ func WithInterval(d time.Duration) Option {
 		}
 	}
 }
+
+func WithNotify(n <-chan struct{}) Option {
+	return func(r *Relay) {
+		r.notify = n
+	}
+}

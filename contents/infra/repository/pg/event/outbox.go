@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"play-ddd/contents/infra/outbox"
+	"play-ddd/utils/ptr"
 	"play-ddd/utils/xerr"
 	"play-ddd/utils/xslice"
 )
@@ -149,7 +150,7 @@ func (e *eventBatch) PollEvents(arg outbox.Arg) (es []outbox.Event, err error) {
 
 func fromOutbox(o outbox.Result) (e Event) {
 	e.ID = ID(o.ID)
-	e.Status = string(o.Status)
-	e.Reason = o.Reason
-	return e
+	e.Status = ptr.To(string(o.Status))
+	e.Reason = ptr.To(o.Reason)
+	return
 }

@@ -12,6 +12,7 @@ import (
 	"play-ddd/contents/app"
 	"play-ddd/contents/domain/chapter"
 	"play-ddd/contents/domain/novel"
+	"play-ddd/contents/infra/outbox"
 	pgevent "play-ddd/contents/infra/repository/pg/event"
 	pgnovel "play-ddd/contents/infra/repository/pg/novel"
 )
@@ -70,6 +71,7 @@ type postgresRepo struct {
 
 func (g postgresRepo) Event() novel.EventRepo   { return pgevent.New(g.db) }
 func (g postgresRepo) Chapter() app.ChapterRepo { panic(`unimplemented`) }
+func (g postgresRepo) Outbox() outbox.EventRepo { return pgevent.New(g.db) }
 
 func (g postgresRepo) Novel() app.NovelRepo { return pgnovel.New(g.db, g.novelFac) }
 func (g postgresRepo) Tx(fn func(app.Repo) error) error {

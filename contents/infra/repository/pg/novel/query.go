@@ -23,7 +23,10 @@ func (p novelRepo) ByAuthorAndTitle(
 	var n Novel
 	err := p.db.
 		WithContext(ctx).
-		Where(Novel{AuthorID: ID(authorID)}).
+		Where(Novel{
+			AuthorID: ID(authorID),
+			Title:    title,
+		}).
 		Where(nonDeleted).
 		Take(&n).
 		Error

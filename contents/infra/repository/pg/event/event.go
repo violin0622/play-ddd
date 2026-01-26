@@ -12,7 +12,6 @@ import (
 	"play-ddd/common"
 	"play-ddd/contents/domain"
 	"play-ddd/contents/domain/novel"
-	dt "play-ddd/contents/infra/repository/pg/datatypes"
 	"play-ddd/contents/infra/repository/pg/datatypes/ts"
 	dtulid "play-ddd/contents/infra/repository/pg/datatypes/ulid"
 	novelv1 "play-ddd/proto/gen/go/contents/novel/v1"
@@ -24,15 +23,17 @@ var _ domain.EventRepo[novel.ID, novel.ID] = eventRepo{}
 type (
 	ID    = dtulid.ULID
 	Event struct {
-		dt.Model[ID]
+		ID            ID `gorm:"primarykey"`
+		CreatedTs     ts.Timestamp
+		UpdatedTs     ts.Timestamp
 		AggregateID   ID
 		AggregateKind string
 		Kind          string
 		Payload       []byte
-		Version       uint64
-		Status        string
-		Reason        string
-		Seq           uint64
+		AggregateSeq  uint64
+		Status        *string
+		Reason        *string
+		Seq           *uint64
 	}
 )
 
@@ -57,7 +58,7 @@ func (e eventRepo) Append(
 
 			err = tx.Model(Event{}).
 				WithContext(ctx).
-				Select(`COALESCE(MAX(version),0)`).
+				Select(`COALESCE(MAX(aggregate_seq),0)`).
 				Where(`"aggregate_id"=?`, ev.AggregateID).
 				Take(&ver).
 				Error
@@ -65,9 +66,11 @@ func (e eventRepo) Append(
 				return fmt.Errorf(`append events: %w`, err)
 			}
 
-			ev.Version = ver + 1
+			ev.AggregateSeq = ver + 1
 
-			err = tx.WithContext(ctx).Create(&ev).Error
+			err = tx.WithContext(ctx).
+				Omit(`status`, `reason`, `seq`).
+				Create(&ev).Error
 			if err != nil {
 				return fmt.Errorf(`append events: %w`, err)
 			}

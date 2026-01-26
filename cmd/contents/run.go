@@ -14,6 +14,8 @@ import (
 	"play-ddd/contents/domain/chapter"
 	"play-ddd/contents/domain/novel"
 	"play-ddd/contents/iface/grpc"
+	"play-ddd/contents/infra/eventbus/stderr"
+	"play-ddd/contents/infra/outbox"
 	"play-ddd/contents/infra/repository/pg"
 	"play-ddd/contents/infra/server"
 	"play-ddd/contents/infra/server/requestlimiter/bps"
@@ -39,6 +41,11 @@ func runErr(*cobra.Command, []string) error {
 	novelFac := novel.NewFactory(logr.Discard())
 	chapterFac := chapter.NewFactory(logr.Discard())
 	repo := pg.New(db, novelFac, chapterFac)
+	outbox := outbox.NewRelay(
+		stderr.New(),
+		repo.Outbox(),
+		logr.Discard(),
+	)
 
 	ch := app.NewCommandHandler(repo, logr.Discard())
 	cmdSvc := grpc.NewCmdService(ch)
@@ -70,21 +77,27 @@ func runErr(*cobra.Command, []string) error {
 	}
 
 	go func() {
-		if err := svr.Serve(l); err != nil {
-			fmt.Println(`Server stopped.`)
-		}
+		_c := make(chan os.Signal, 1)
+		signal.Notify(_c,
+			os.Interrupt,
+			syscall.SIGHUP,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+			syscall.SIGQUIT)
+		msg := <-_c
+		fmt.Println(`Quit by signal: `, msg.String())
+		svr.GracefulStop()
 	}()
 
-	_c := make(chan os.Signal, 1)
-	signal.Notify(_c,
-		os.Interrupt,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-	msg := <-_c
-	fmt.Println(`Quit by signal: `, msg.String())
-	svr.GracefulStop()
+	if err := outbox.Start(); err != nil {
+		fmt.Println(`Failed to start relay.`)
+	}
+
+	if err := svr.Serve(l); err != nil {
+		fmt.Println(`Server stopped.`)
+	}
+
+	outbox.Stop()
 
 	return nil
 }

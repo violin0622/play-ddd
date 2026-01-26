@@ -134,8 +134,9 @@ schema-new: migrate
 	@$(CURDIR)/bin/migrate create -ext sql -dir $(CURDIR)/schemas/migrations -seq $(MIGRATION)
 
 .PHONY: schema-up
+schema-up: n:=
 schema-up: migrate
-	@$(CURDIR)/bin/migrate -database ${DB} -path $(CURDIR)/schemas/migrations up
+	$(CURDIR)/bin/migrate -database ${DB} -path $(CURDIR)/schemas/migrations up $(n)
 
 .PHONY: schema-down
 schema-down: migrate

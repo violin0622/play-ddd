@@ -10,6 +10,6 @@ CREATE    TABLE IF NOT EXISTS public.event_cursors (
           target_table CHARACTER VARYING(256) NOT NULL DEFAULT ''::CHARACTER VARYING
           );
 
-INSERT INTO public.event_cursors (relay_cursor, target_table) VALUES (0, "events");
+INSERT INTO public.event_cursors (relay_cursor, target_table) VALUES (0, 'events');
 
 COMMIT   ;

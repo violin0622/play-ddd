@@ -37,3 +37,7 @@ func WrapOnErr(err *error, msg string, a ...any) error {
 
 	return fmt.Errorf(`%s: %w`, fmt.Sprintf(msg, a...), *err)
 }
+
+type TransientError interface {
+	IsTransient(error) bool
+}
